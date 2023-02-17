@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_tag"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layoutManager="com.google.android.flexbox.FlexboxLayoutManager"
+        android:layout_below="@+id/tag_et" />
+
+    <EditText
+        android:id="@+id/tag_et"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="태그를 추가하세요"
+        android:maxLines="1"
+        android:layout_below="@+id/tag_btns"
+        android:layout_marginVertical="8dp"
+        android:layout_marginHorizontal="12dp"
+        android:inputType="text"
+        android:imeOptions="actionSearch"/>
+
+    <LinearLayout
+        android:id="@+id/tag_btns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:gravity="center"
+        android:layout_alignParentTop="true">
+
+        <ImageView
+            android:id="@+id/btn_cancel"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_cancel_24"
+            android:layout_margin="4dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="메모에 태그 추가하기"
+            android:textSize="24sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="@color/black"/>
+
+        <ImageView
+            android:id="@+id/btn_done"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_done_24"
+            android:layout_margin="4dp"/>
+    </LinearLayout>
+
+</RelativeLayout>
