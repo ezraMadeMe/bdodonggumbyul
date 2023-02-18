@@ -70,18 +70,18 @@ class SetTagActivity : AppCompatActivity() {
 
         tagAdapter.setTagClickListener(object : SetTagAdapter.OnTagClickListener {
             override fun onClick(view: View, position: Int) {
-                if (selected[position]){
-                    selected[position] = !selected[position]
-                    tagAdapter
-                }else{
-                    selected[position] = !selected[position]
-                }
+                Toast.makeText(this@SetTagActivity, ""+tags[position], Toast.LENGTH_SHORT).show()
+//                if (selected[position]){
+//                    selected[position] = !selected[position]
+//                    tagAdapter
+//                }else{
+//                    selected[position] = !selected[position]
+//                }
             }
         })
     }
 
     fun cancelEvent() {
-
 //        val listener = DialogInterface.OnClickListener { dialog, which ->
 //            dialog.dismiss()
 //        }
@@ -96,15 +96,15 @@ class SetTagActivity : AppCompatActivity() {
     var cnt = 0
 
     fun doneEvent() {
-        for(i in 0..selected.size){
-            if (selected[i]) {
-                cnt++
+//        for(i in 0..selected.size){
+//            if (selected[i]) {
+//                cnt++
+//
+//            }
+//        }
 
-            }
-        }
-
-        Toast.makeText(this@SetTagActivity, ""+cnt, Toast.LENGTH_SHORT).show()
-        //레트로핏
-        finish()
+//        Toast.makeText(this@SetTagActivity, ""+cnt, Toast.LENGTH_SHORT).show()
+//        //레트로핏
+//        finish()
     }
 }

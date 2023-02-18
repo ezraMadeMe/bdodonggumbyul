@@ -40,7 +40,6 @@ class SetTagAdapter(var tags: MutableList<String>): RecyclerView.Adapter<SetTagA
 
         fun bind(tag: String){
             binding.tvTag.text = tag
-
         }
     }
 }

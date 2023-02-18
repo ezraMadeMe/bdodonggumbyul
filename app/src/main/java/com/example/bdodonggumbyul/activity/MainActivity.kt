@@ -1,25 +1,38 @@
 package com.example.bdodonggumbyul.activity
 
+import android.Manifest
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.os.Vibrator
+import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
+import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bdodonggumbyul.Memo
+import com.example.bdodonggumbyul.MemoItem
 import com.example.bdodonggumbyul.R
 import com.example.bdodonggumbyul.adapter.MainRecyclerAdapter
 import com.example.bdodonggumbyul.adapter.VCalendarAdapter
 import com.example.bdodonggumbyul.databinding.ActivityMainBinding
 import com.example.bdodonggumbyul.dialog.AddBSDialog
 import com.example.bdodonggumbyul.dialog.SearchBSDialog
+import com.example.bdodonggumbyul.retrofit.RetrofitService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,16 +42,17 @@ class MainActivity : AppCompatActivity() {
 
     val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     val vcAdapter by lazy { VCalendarAdapter(initDaylist(setNow())) }
-    val homeAdapter by lazy { MainRecyclerAdapter(memos) }
+    val homeAdapter by lazy { MainRecyclerAdapter(this@MainActivity, memos) }
 
-    var memos = mutableListOf(
-        Memo("2023/12/23", "13:04", "testestesteseetes"),
-        Memo("2023/12/23", "13:04", "testestesteseetes"),
-        Memo("2023/12/23", "13:04", "testestesteseetes"),
-        Memo("2023/12/23", "13:04", "testestesteseetes"),
-        Memo("2023/12/23", "13:04", "testestesteseetes"),
-        Memo("2023/12/23", "13:04", "testestesteseetes")
-    )
+    var memos = mutableListOf<MemoItem>()
+
+//    MemoItem("111", "2023/12/23", "13:04", "testestesteseetes", null),
+//    MemoItem("222", "2023/12/23", "13:04", "testestesteseetes", null),
+//    MemoItem("333", "2023/12/23", "13:04", "testestesteseetes", null),
+//    MemoItem("444", "2023/12/23", "13:04", "testestesteseetes", null),
+//    MemoItem("5555", "2023/12/23", "13:04", "testestesteseetes", null),
+//    MemoItem("6666", "2023/12/23", "13:04", "testestesteseetes", null)
+
     var dates = mutableListOf<String>()
     var cal = Calendar.getInstance()
     var n = 0
@@ -49,8 +63,71 @@ class MainActivity : AppCompatActivity() {
 
         setRecycler()
 
+        verifyStoragePermissions(this@MainActivity)
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
         binding.layoutMY.setOnClickListener { openMonthlyCalendar() }
+        binding.swipe.setOnRefreshListener {
+            loadMemo()
+            binding.swipe.isRefreshing = false
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadMemo()
+    }
+
+    fun loadMemo(){
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.loadMemo()
+        call.enqueue(object : Callback<MutableList<MemoItem>>{
+            override fun onResponse(
+                call: Call<MutableList<MemoItem>>,
+                response: Response<MutableList<MemoItem>>
+            ) {
+                memos.clear()
+                homeAdapter.notifyDataSetChanged()
+
+                val result = response.body()
+
+                var index = 0
+
+                if (result != null) {
+                    for (i in result){
+                        memos.add(index, result[index])
+                        homeAdapter.notifyItemInserted(index)
+                        index++
+                    }
+                    Log.d("@@@@@@@@결과 널 확인","${memos.size}")
+                }
+            }
+
+            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                Log.d("@@@@@@데이터 로딩 확인","error : ${t.message}")
+            }
+
+        })
+    }
+
+
+    //use-permission 으로도 해결이 안돼서 수동으로 퍼미션 받는 로직
+    val REQUEST_EXTERNAL_STORAGE = 1
+    val PERMISSIONS_STORAGE = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
+
+    fun verifyStoragePermissions(activity: Activity) {
+        val permission =
+            ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                activity,
+                PERMISSIONS_STORAGE,
+                REQUEST_EXTERNAL_STORAGE
+            )
+        }
     }
 
     fun setRecycler() {
@@ -65,7 +142,7 @@ class MainActivity : AppCompatActivity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
 
-                //한번 스크롤해서 ㅇ일자가 불러와진 후 다시 스크롤할 때 월/연변화를 인식할 수 없음
+                //한번 스크롤해서 일자가 불러와진 후 다시 스크롤할 때 월/연변화를 인식할 수 없음
 
                 val top = !binding.vDateRecycler.canScrollVertically(-1)
                 val bottom = !binding.vDateRecycler.canScrollVertically(1)
@@ -90,9 +167,10 @@ class MainActivity : AppCompatActivity() {
                             binding.vMonth.text = DecimalFormat("00").format(m - 1)
                         }
                         //아래로 스크롤은 무한스크롤이 되는데 위로 스크롤은 안됨 //내가해냄
-                        initDaylist("$y.${m-1}.01")
+                        initDaylist("$y.${m - 1}.01")
                         //무한정 데이터가 추가되는거 쫌 그럼 정리하고싶음
-                        Toast.makeText(this@MainActivity, "상단: ${dates.size}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "상단: ${dates.size}", Toast.LENGTH_SHORT)
+                            .show()
                     }
                     bottom -> { //스크롤이 최하단에 위치하면 월이 하나씩 증가
                         //하단스크롤하면 연/월이 안바뀜
@@ -104,8 +182,9 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             binding.vMonth.text = DecimalFormat("00").format(m + 1)
                         }
-                        initDaylist("$y.${m+1}.${cal.getActualMaximum(m+1)}")
-                        Toast.makeText(this@MainActivity, "상단: ${dates.size}", Toast.LENGTH_SHORT).show()
+                        initDaylist("$y.${m + 1}.${cal.getActualMaximum(m + 1)}")
+                        Toast.makeText(this@MainActivity, "상단: ${dates.size}", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 }
             }
@@ -123,7 +202,7 @@ class MainActivity : AppCompatActivity() {
         })
         homeAdapter.setItemClickListener(object : MainRecyclerAdapter.OnClickListener {
             override fun onClick(view: View, position: Int) {
-                Toast.makeText(this@MainActivity, "" + memos[position].memo, Toast.LENGTH_SHORT)
+                Toast.makeText(this@MainActivity, "" + memos[position].content, Toast.LENGTH_SHORT)
                     .show()
                 //특정 메모에 대한 자세히 보기 다이얼로그 팝업
             }
@@ -149,26 +228,26 @@ class MainActivity : AppCompatActivity() {
         var newList = mutableListOf<String>()
 
         if (dates.size == 0) {
-            cal.set(y,m-1,d)
+            cal.set(y, m - 1, d)
         } else {
-            if (d==1) cal.set(y,m-2,d)
-            else cal.set(y,m,d)
+            if (d == 1) cal.set(y, m - 2, d)
+            else cal.set(y, m, d)
         }
 
         var last = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
-        if (d==1){
+        if (d == 1) {
 //            Toast.makeText(this@MainActivity, "상단 스크롤 $last", Toast.LENGTH_SHORT).show()
-            for (i in 1..last){
+            for (i in 1..last) {
                 newList.add(DecimalFormat("00").format(i))
             }
-            vcAdapter.notifyItemMoved(0,dates.size)
+            vcAdapter.notifyItemMoved(0, dates.size)
         } else {
 //            Toast.makeText(this@MainActivity, "하단 스크롤 $last", Toast.LENGTH_SHORT).show()
             for (i in 1..last) {
                 newList.add(DecimalFormat("00").format(i))
             }
-        binding.vDateRecycler.scrollToPosition(d - 1)
+            binding.vDateRecycler.scrollToPosition(d - 1)
         }
         dates.addAll(newList)
 
@@ -200,7 +279,7 @@ class MainActivity : AppCompatActivity() {
         return when (it.itemId) {
             R.id.tag -> { //태그명 검색창
                 val intent = Intent(this@MainActivity, SetTagActivity::class.java)
-                startActivityForResult(intent,1994)
+                startActivityForResult(intent, 1994)
                 true
             }
             R.id.key -> { //키워드 검색창
@@ -214,8 +293,8 @@ class MainActivity : AppCompatActivity() {
                 d.arguments = bundle
                 d.show(supportFragmentManager, attributionTag)
                 d.setOnClickListener(object : AddBSDialog.CompleteClickListener {
-                    override fun onClick(memo: Memo) {
-                        Toast.makeText(this@MainActivity, memo.memo, Toast.LENGTH_SHORT).show()
+                    override fun onClick(memo: MemoItem) {
+                        Toast.makeText(this@MainActivity, memo.content, Toast.LENGTH_SHORT).show()
                         memos.add(memo)
                         homeAdapter.notifyDataSetChanged()
                     }

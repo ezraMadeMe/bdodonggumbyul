@@ -5,15 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.bdodonggumbyul.Memo
-import com.example.bdodonggumbyul.adapter.MainRecyclerAdapter
+import com.example.bdodonggumbyul.MemoItem
 import com.example.bdodonggumbyul.databinding.FragmentMainBinding
 
 class MainFragment: Fragment() {
 
-    var items: MutableList<Memo> = mutableListOf(
-        Memo("2023/12/23","13:04","testestesteseetes")
-    )
     lateinit var binding: FragmentMainBinding
 
     override fun onCreateView(
