@@ -14,6 +14,7 @@ import android.os.Vibrator
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
@@ -36,6 +37,7 @@ import java.io.File
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.HashMap
 
 
 class MainActivity : AppCompatActivity() {
@@ -45,13 +47,6 @@ class MainActivity : AppCompatActivity() {
     val homeAdapter by lazy { MainRecyclerAdapter(this@MainActivity, memos) }
 
     var memos = mutableListOf<MemoItem>()
-
-//    MemoItem("111", "2023/12/23", "13:04", "testestesteseetes", null),
-//    MemoItem("222", "2023/12/23", "13:04", "testestesteseetes", null),
-//    MemoItem("333", "2023/12/23", "13:04", "testestesteseetes", null),
-//    MemoItem("444", "2023/12/23", "13:04", "testestesteseetes", null),
-//    MemoItem("5555", "2023/12/23", "13:04", "testestesteseetes", null),
-//    MemoItem("6666", "2023/12/23", "13:04", "testestesteseetes", null)
 
     var dates = mutableListOf<String>()
     var cal = Calendar.getInstance()
@@ -66,6 +61,20 @@ class MainActivity : AppCompatActivity() {
         verifyStoragePermissions(this@MainActivity)
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
         binding.layoutMY.setOnClickListener { openMonthlyCalendar() }
+        binding.etKw.setOnKeyListener { v, keyCode, event ->
+            when (keyCode) {
+                KeyEvent.KEYCODE_ENTER -> {
+                    if (event.action == KeyEvent.ACTION_DOWN) { //분기처리해서 중복입력 방지 //내가 해냄
+                        queryMemo()
+                    }
+                    true
+                }
+                else -> {
+                    Log.d("@@@@@@키워드 ET 이벤트 실패", keyCode.toString())
+                    false
+                }
+            }
+        }
         binding.swipe.setOnRefreshListener {
             loadMemo()
             binding.swipe.isRefreshing = false
@@ -77,10 +86,42 @@ class MainActivity : AppCompatActivity() {
         loadMemo()
     }
 
-    fun loadMemo(){
+    fun queryMemo() {
+        if (binding.etKw.text != null) {
+            val retrofitService = RetrofitService.newInstance()
+
+            val call = retrofitService.queryMemo(binding.etKw.text.toString())
+            call.enqueue(object : Callback<MutableList<MemoItem>> {
+                override fun onResponse(
+                    call: Call<MutableList<MemoItem>>,
+                    response: Response<MutableList<MemoItem>>
+                ) {
+                    Log.d("@@@@@@@@쿼리 문자열 넘어오는지 확인","${response.body()}")
+                    memos.clear()
+                    homeAdapter.notifyDataSetChanged()
+                    val result = response.body()
+                    var index = 0
+                    if (result != null) {
+                        for (i in result) {
+                            memos.add(index, result[index])
+                            homeAdapter.notifyItemInserted(index)
+                            index++
+                        }
+                    }
+                }
+                override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                    Log.d("@@@@@@키워드 쿼리 실패 확인", "error : ${t.message}")
+                }
+            })
+        } else {
+            Toast.makeText(this@MainActivity, "검색할 단어를 입력하세요", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun loadMemo() {
         val retrofitService = RetrofitService.newInstance()
         val call = retrofitService.loadMemo()
-        call.enqueue(object : Callback<MutableList<MemoItem>>{
+        call.enqueue(object : Callback<MutableList<MemoItem>> {
             override fun onResponse(
                 call: Call<MutableList<MemoItem>>,
                 response: Response<MutableList<MemoItem>>
@@ -89,26 +130,21 @@ class MainActivity : AppCompatActivity() {
                 homeAdapter.notifyDataSetChanged()
 
                 val result = response.body()
-
                 var index = 0
-
                 if (result != null) {
-                    for (i in result){
+                    for (i in result) {
                         memos.add(index, result[index])
                         homeAdapter.notifyItemInserted(index)
                         index++
                     }
-                    Log.d("@@@@@@@@결과 널 확인","${memos.size}")
                 }
             }
 
             override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
-                Log.d("@@@@@@데이터 로딩 확인","error : ${t.message}")
+                Log.d("@@@@@@데이터 로딩 확인", "error : ${t.message}")
             }
-
         })
     }
-
 
     //use-permission 으로도 해결이 안돼서 수동으로 퍼미션 받는 로직
     val REQUEST_EXTERNAL_STORAGE = 1
@@ -135,8 +171,6 @@ class MainActivity : AppCompatActivity() {
         binding.vDateRecycler.adapter = vcAdapter
         binding.homeRv.adapter = homeAdapter
         binding.vDateRecycler.itemAnimator = null
-
-        var selected = ""
 
         binding.vDateRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -194,6 +228,34 @@ class MainActivity : AppCompatActivity() {
                 var y = binding.vYear.text
                 var m = binding.vMonth.text
                 var d = dates[position]
+
+                val retrofitService = RetrofitService.newInstance()
+                val call = retrofitService.queryDate("$y.$m.$d")
+                call.enqueue(object : Callback<MutableList<MemoItem>>{
+                    override fun onResponse(
+                        call: Call<MutableList<MemoItem>>,
+                        response: Response<MutableList<MemoItem>>
+                    ) {
+                        Log.d("@@@@@@@@날짜 쿼리 문자열 넘어오는지 확인","${response.body()}")
+
+                        memos.clear()
+                        homeAdapter.notifyDataSetChanged()
+
+                        val result = response.body()
+                        var index = 0
+                        if (result != null){
+                            for(i in result){
+                                memos.add(index, i)
+                                homeAdapter.notifyItemInserted(index)
+                                index++
+                            }
+                        }
+                    }
+
+                    override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                        Log.d("@@@@@@키워드 쿼리 실패 확인", "error : ${t.message}")
+                    }
+                })
 
                 binding.mainTb.title = "$y.$m.$d"
                 binding.drawerLayout.closeDrawer(Gravity.LEFT)
@@ -283,7 +345,11 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.key -> { //키워드 검색창
-                SearchBSDialog.newInstance().show(supportFragmentManager, attributionTag)
+                binding.etKw.visibility =
+                    when (binding.etKw.visibility) {
+                        View.VISIBLE -> View.GONE
+                        else -> View.VISIBLE
+                    }
                 true
             }
             R.id.add -> { //메모 추가창

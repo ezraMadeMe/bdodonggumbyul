@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.bdodonggumbyul.adapter.SetTagAdapter
 import com.example.bdodonggumbyul.databinding.ActivitySetTagBinding
+import com.example.bdodonggumbyul.dialog.AddBSDialog
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 
@@ -41,9 +42,9 @@ class SetTagActivity : AppCompatActivity() {
 
         //et 작성후 submit하면 rv에 태그 추가
         binding.tagEt.setOnKeyListener { _, keyCode, event ->
-            when(keyCode){
+            when (keyCode) {
                 KeyEvent.KEYCODE_ENTER -> { //엔터가 두번 눌리는듯
-                    if (event.action == KeyEvent.ACTION_DOWN){ //분기처리해서 중복입력 방지 //내가 해냄
+                    if (event.action == KeyEvent.ACTION_DOWN) { //분기처리해서 중복입력 방지 //내가 해냄
                         tags.add(binding.tagEt.text.toString())
                         tagAdapter.notifyItemInserted(tags.size)
                         binding.tagEt.text.clear()
@@ -59,52 +60,43 @@ class SetTagActivity : AppCompatActivity() {
         //rv내 태그 선택시 다중선택가능&색상 변화
     }
 
-    var selected = mutableListOf<Boolean>()
+    var isSelected = mutableMapOf<String, Boolean>()
 
     fun setRecycler() {
         binding.rvTag.adapter = tagAdapter
         rvm.justifyContent = JustifyContent.CENTER
         binding.rvTag.layoutManager = rvm
 
-        for (i in 0..tags.size) selected.add(false)
+        for (i in tags) {
+            isSelected[i] = false
+        }
 
         tagAdapter.setTagClickListener(object : SetTagAdapter.OnTagClickListener {
             override fun onClick(view: View, position: Int) {
-                Toast.makeText(this@SetTagActivity, ""+tags[position], Toast.LENGTH_SHORT).show()
-//                if (selected[position]){
-//                    selected[position] = !selected[position]
-//                    tagAdapter
-//                }else{
-//                    selected[position] = !selected[position]
-//                }
+                Toast.makeText(this@SetTagActivity, "" + tags[position], Toast.LENGTH_SHORT).show()
+                isSelected[tags[position]] =
+                    when {
+                        true -> false
+                        else -> true
+                    }
             }
         })
     }
 
     fun cancelEvent() {
-//        val listener = DialogInterface.OnClickListener { dialog, which ->
-//            dialog.dismiss()
-//        }
-//
-//        AlertDialog.Builder(this@SetTagActivity)
-//            .setMessage("태그 선택을 취소하시겠습니까?")
-//            .setPositiveButton("네", listener)
-//            .create()
+
         finish()
     }
-
-    var cnt = 0
-
     fun doneEvent() {
-//        for(i in 0..selected.size){
-//            if (selected[i]) {
-//                cnt++
-//
-//            }
-//        }
-
-//        Toast.makeText(this@SetTagActivity, ""+cnt, Toast.LENGTH_SHORT).show()
-//        //레트로핏
-//        finish()
+        var selected = arrayListOf<String>()
+        val intent = Intent(this@SetTagActivity, AddBSDialog::class.java)
+        for (i in isSelected){
+            if (i.value) {
+                selected.add(i.key)
+            }
+        }
+        intent.putExtra("tags",selected)
+        startActivity(intent)
+        finish()
     }
 }

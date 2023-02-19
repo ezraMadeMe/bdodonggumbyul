@@ -1,6 +1,7 @@
 package com.example.bdodonggumbyul.adapter
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,11 +30,17 @@ class MainRecyclerAdapter(var context: Context, var list: MutableList<MemoItem>)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(list[position])
+
+        val item = list[position]
+
+        holder.bind(item)
         holder.itemView.setOnClickListener { itemClickListener.onClick(it,position) }
-//        if (list[position].image.equals(""))
-//        holder.binding.itemIv.visibility = View.VISIBLE
-//        Glide.with(context).load("http://mrhi2022.dothome.co.kr/memo/"+list[position].image).into(holder.binding.itemIv)
+        
+        if (!item.image.equals("") || item.image == null){
+            holder.binding.itemIv.visibility = View.VISIBLE
+            val imgUrl = "http://ezra2022.dothome.co.kr/memo/${item.image}"
+            Glide.with(context).load(imgUrl).into(holder.binding.itemIv)
+        }
     }
 
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {

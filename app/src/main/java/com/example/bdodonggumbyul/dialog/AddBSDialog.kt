@@ -101,11 +101,12 @@ class AddBSDialog : BottomSheetDialogFragment() {
         binding.addImage.setOnClickListener { addImage() }
         binding.addComplete.setOnClickListener { saveMemo() }
         binding.addTag.setOnClickListener { selectTag() }
+        binding.selTag.text = selectTag()
     }
 
     fun selectTag() {
         val intent = Intent(requireContext(), SetTagActivity::class.java)
-        startActivityForResult(intent, 1111)
+
     }
 
     fun setDateAndTime() {
@@ -126,52 +127,59 @@ class AddBSDialog : BottomSheetDialogFragment() {
                 cursor.moveToFirst()
                 val index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
                 result = cursor.getString(index)
-                cursor?.close()
+                cursor.close()
             }
         }
         return result
     }
 
     fun saveMemo() {
+
         val id = "아이디는 어케 부여할까"
         val date = binding.addDate.text.toString()
         val timestamp = binding.addTimestamp.text.toString()
         val memo = binding.addEt.text.toString()
 
-        val retrofitService = RetrofitService.newInstance()
-        var filePart: MultipartBody.Part? = null
+        if (memo == "")
+            Toast.makeText(requireContext(), "메모를 입력하세요", Toast.LENGTH_SHORT)
+            .show()
+        else {
+            val retrofitService = RetrofitService.newInstance()
+            var filePart: MultipartBody.Part? = null
 
-        //imagePath != null 아니고 ! .equals("") 해야 일로 안넘어감! 내가 해냄!
-        if (!imagePath.equals("")) {
-            val file = File(imagePath)
-            val requestBody = RequestBody.create(MediaType.get("image/*"), file)
-            filePart = MultipartBody.Part.createFormData("image",file.name,requestBody)
+            //imagePath != null 아니고 ! .equals("") 해야 일로 안넘어감! 내가 해냄!
+            if (!imagePath.equals("")) {
+                val file = File(imagePath)
+                val requestBody = RequestBody.create(MediaType.get("image/*"), file)
+                filePart = MultipartBody.Part.createFormData("image", file.name, requestBody)
+            }
+
+            //dataPart의 값이 몽땅 빈값으로 넘어감 머선일이고
+            var dataPart = HashMap<String, String>()
+            dataPart["id"] = id
+            dataPart["date"] = date
+            dataPart["timestamp"] = timestamp
+            dataPart["content"] = memo
+
+            val call = retrofitService.insertMemo(dataPart, filePart)
+            call.enqueue(object : Callback<String> {
+                override fun onResponse(call: Call<String>, response: Response<String>) {
+                    //토스트도 안 뜨고 이미지url말고는 저장이 안됨...  //당연함 업로드 실패하니까...
+                    Log.d("레트로핏 성공@@@@@@@", "${response.body()}")
+                    dismiss()
+                }
+
+                override fun onFailure(call: Call<String>, t: Throwable) {
+                    //이미지 추가를 안하는데 imagePath 처리로직이 돌아서 그중에 오류나니 이리로 오는게 당연했음...
+                    //근데 이제 추가안한 이미지패스가 들어가기 시작함...
+                    //php문서 새로고침한번씩 할때마다 컬럼이 추가됨
+                    Log.d("레트로핏 실패@@@@@@@", "$id _ $date _ $timestamp _ $memo")
+                    Log.d("레트로핏 실패 메시지@@@@@@@", "${t.message}")
+                }
+            })
         }
-
-        //dataPart의 값이 몽땅 빈값으로 넘어감 머선일이고
-        var dataPart = HashMap<String, String>()
-        dataPart.put("id", id)
-        dataPart.put("date", date)
-        dataPart.put("timestamp", timestamp)
-        dataPart.put("content", memo)
-
-        val call = retrofitService.insertMemo(dataPart, filePart)
-        call.enqueue(object : Callback<String>{
-            override fun onResponse(call: Call<String>, response: Response<String>) {
-                //토스트도 안 뜨고 이미지url말고는 저장이 안됨...  //당연함 업로드 실패하니까...
-                Log.d("레트로핏 성공@@@@@@@","${response.body()}")
-                dismiss()
-            }
-
-            override fun onFailure(call: Call<String>, t: Throwable) {
-                //이미지 추가를 안하는데 imagePath 처리로직이 돌아서 그중에 오류나니 이리로 오는게 당연했음...
-                //근데 이제 추가안한 이미지패스가 들어가기 시작함...
-                //php문서 새로고침한번씩 할때마다 컬럼이 추가됨
-                Log.d("레트로핏 실패@@@@@@@","$id _ $date _ $timestamp _ $memo")
-                Log.d("레트로핏 실패 메시지@@@@@@@","${t.message}")
-            }
-        })
     }
+
     fun addImage() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"

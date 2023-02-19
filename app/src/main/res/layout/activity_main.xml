@@ -22,14 +22,28 @@
             app:title="23.02.13(월)"
             app:titleTextColor="@color/black" />
 
+        <EditText
+            android:id="@+id/et_kw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/shape_tag"
+            android:drawableRight="@drawable/baseline_search_24"
+            android:layout_below="@+id/main_tb"
+            android:padding="8dp"
+            android:layout_marginHorizontal="8dp"
+            android:includeFontPadding="true"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:maxLines="1"/>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_tag"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layoutManager="com.google.android.flexbox.FlexboxLayoutManager"
             android:orientation="horizontal"
-            android:layout_below="@+id/main_tb"
-            android:layout_marginVertical="4dp"/>
+            android:layout_below="@+id/et_kw"
+            android:layout_marginVertical="8dp" />
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipe"

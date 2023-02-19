@@ -31,13 +31,8 @@ class SetTagAdapter(var tags: MutableList<String>): RecyclerView.Adapter<SetTagA
         holder.itemView.setOnClickListener { tagClickListener.onClick(it,position) }
     }
 
-    fun setMultipleSelection(position: Int){
-
-    }
-
     inner class VH(itemview: View) : ViewHolder(itemview) {
         val binding = ItemTagBinding.bind(itemview)
-
         fun bind(tag: String){
             binding.tvTag.text = tag
         }

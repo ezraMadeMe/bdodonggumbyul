@@ -9,13 +9,5 @@
     app:behavior_peekHeight="56dp"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-    <EditText
-        android:id="@+id/add_et"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:drawableRight="@drawable/baseline_search_24"
-        android:textSize="32sp"/>
-
     <!--  최근 검색 기록?  -->
 </RelativeLayout>

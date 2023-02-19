@@ -13,6 +13,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.PartMap
+import retrofit2.http.Query
 
 interface RetrofitService {
 
@@ -43,14 +44,16 @@ interface RetrofitService {
     @GET("memo/loadMemo.php")
     fun loadMemo(): Call<MutableList<MemoItem>>
 
+    //특정 키워드가 포함된 메모를 쿼리
+    @GET("memo/queryMemo.php")
+    fun queryMemo(@Query("content") content: String): Call<MutableList<MemoItem>>
+
     //특정 날짜의 메모를 쿼리
     //초기 로딩시 오늘 날짜
+    @GET("memo/queryDate.php")
+    fun queryDate(@Query("date") date: String): Call<MutableList<MemoItem>>
 
     //특정 태그가 포함된 메모를 쿼리
-
-
-    //특정 키워드가 포함된 메모를 쿼리
-
 
     //작성된 새로운 메모를 서버에 추가
 }
