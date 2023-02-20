@@ -9,6 +9,8 @@ import com.example.bdodonggumbyul.databinding.ItemDailyCalendarBinding
 
 class VCalendarAdapter(var list: MutableList<String>): RecyclerView.Adapter<VCalendarAdapter.VH>() {
 
+    //날짜 가져오는 라이브러리
+    //
     interface OnClickListener {  fun onClick(view: View, position: Int) }
     fun setItemClickListener(onItemClickListener: OnClickListener) {
         this.itemClickListener = onItemClickListener

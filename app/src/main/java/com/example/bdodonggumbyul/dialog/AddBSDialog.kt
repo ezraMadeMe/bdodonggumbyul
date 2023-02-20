@@ -101,7 +101,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
         binding.addImage.setOnClickListener { addImage() }
         binding.addComplete.setOnClickListener { saveMemo() }
         binding.addTag.setOnClickListener { selectTag() }
-        binding.selTag.text = selectTag()
+//        binding.selTag.text = selectTag()
     }
 
     fun selectTag() {

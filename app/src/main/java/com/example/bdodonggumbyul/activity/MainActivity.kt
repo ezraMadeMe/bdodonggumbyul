@@ -223,6 +223,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+
+//        binding.vDateRecycler.addItemDecoration() //헤더 추가
+
         vcAdapter.setItemClickListener(object : VCalendarAdapter.OnClickListener {
             override fun onClick(view: View, position: Int) {
                 var y = binding.vYear.text

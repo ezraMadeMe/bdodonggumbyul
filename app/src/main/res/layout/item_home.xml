@@ -26,7 +26,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/time_stamp"
         android:outlineAmbientShadowColor="@color/cardview_shadow_end_color"
-        app:cardCornerRadius="12dp">
+        app:cardCornerRadius="12dp"
+        android:layout_marginHorizontal="4dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
