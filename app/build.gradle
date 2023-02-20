@@ -40,8 +40,11 @@ android {
 
 dependencies {
 
+    //settings.gradle 에서 maven { url 'https://jitpack.io' } , jcenter() 추가해주니 동작함
+    implementation 'com.emc.thye:VerticalCalendar:1.0.4' //작동안함
+    implementation 'com.michalsvec:single-row-calednar:1.0.0'
+
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
-    implementation 'com.emc.thye:VerticalCalendar:1.0.4'
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'

@@ -63,31 +63,29 @@
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </RelativeLayout>
 
-    <LinearLayout
-        android:id="@+id/drawer_contents"
-        android:layout_width="100dp"
+    <RelativeLayout
+        android:id="@+id/drawer_content"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/material_dynamic_tertiary50"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_gravity="start">
+        <!-- layout_gravity 수동으로 써넣어야함 뒤질래? -->
 
-        <!--  header로 만들기(addheaderview)  -->
-
-        <LinearLayout
-            android:id="@+id/layout_m_y"
-            android:layout_width="match_parent"
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="vertical"
+            android:layout_width="72dp"
             android:layout_height="wrap_content"
-            android:background="@color/cardview_shadow_start_color"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:background="#8F8F8F"
+            android:padding="8dp"
+            android:id="@+id/v_ym_layout">
 
             <TextView
                 android:id="@+id/v_year"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="2023"
-                android:textSize="24sp" />
+                android:textSize="24sp"
+                android:layout_gravity="center"/>
 
             <TextView
                 android:id="@+id/v_month"
@@ -95,17 +93,31 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="02"
-                android:textSize="56sp"
-                android:textStyle="bold" />
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:layout_gravity="center"
+                android:drawablePadding="0dp"/>
+
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/v_date_recycler"
+        <!--  header로 만들기(addheaderview)  -->
+        <com.emc.verticalweekcalendar.VerticalWeekCalendar
+            android:id="@+id/cv_vertical"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:overScrollMode="never"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_daily_calendar" />
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            app:selectedBackground="@color/black"
+            android:layout_below="@+id/v_ym_layout"
+            android:layout_above="@+id/btn_set_today" />
+
+        <ImageView
+            android:id="@+id/btn_set_today"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/baseline_today_24"
+            android:background="#8F8F8F"
+            android:padding="12dp"
+            android:layout_alignParentBottom="true"/>
+
+    </RelativeLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>
