@@ -35,9 +35,13 @@ class MainRecyclerAdapter(var context: Context, var list: MutableList<MemoItem>)
 
         holder.bind(item)
         holder.itemView.setOnClickListener { itemClickListener.onClick(it,position) }
-        
-        if (!item.image.equals("") || item.image == null){
+
+        //이미지가 없는 아이템에도 이미지가 붙는 문제 //분기처리 이렇게 하니 해결된듯?
+        if (item.image.equals("")){
+            holder.binding.itemIv.visibility = View.GONE
+        }else{
             holder.binding.itemIv.visibility = View.VISIBLE
+            Log.d("@@@@이미지 문자열 확인",item.image.toString())
             val imgUrl = "http://ezra2022.dothome.co.kr/memo/${item.image}"
             Glide.with(context).load(imgUrl).into(holder.binding.itemIv)
         }

@@ -2,9 +2,7 @@ package com.example.bdodonggumbyul.dialog
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentProvider
-import android.content.ContentResolver
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -58,6 +56,9 @@ class AddBSDialog : BottomSheetDialogFragment() {
     var imagePath = ""
 
     lateinit var binding: BsdAddBinding
+    lateinit var pref: SharedPreferences
+    lateinit var editor : SharedPreferences.Editor
+
 
     companion object {
         fun newInstance(): AddBSDialog {
@@ -82,6 +83,8 @@ class AddBSDialog : BottomSheetDialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.CustomBottomSheetDialogTheme)
+        pref = activity!!.getSharedPreferences("userData", Context.MODE_PRIVATE)
+        editor = pref.edit()
     }
 
     override fun onCreateView(
@@ -101,7 +104,6 @@ class AddBSDialog : BottomSheetDialogFragment() {
         binding.addImage.setOnClickListener { addImage() }
         binding.addComplete.setOnClickListener { saveMemo() }
         binding.addTag.setOnClickListener { selectTag() }
-//        binding.selTag.text = selectTag()
     }
 
     fun selectTag() {
@@ -135,7 +137,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
     fun saveMemo() {
 
-        val id = "아이디는 어케 부여할까"
+        val id = pref.getString("nickname","")
         val date = binding.addDate.text.toString()
         val timestamp = binding.addTimestamp.text.toString()
         val memo = binding.addEt.text.toString()
@@ -156,7 +158,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
             //dataPart의 값이 몽땅 빈값으로 넘어감 머선일이고
             var dataPart = HashMap<String, String>()
-            dataPart["id"] = id
+            dataPart["nickname"] = id.toString()
             dataPart["date"] = date
             dataPart["timestamp"] = timestamp
             dataPart["content"] = memo

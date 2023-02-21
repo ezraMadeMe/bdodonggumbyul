@@ -34,12 +34,13 @@
         android:layout_alignParentTop="true">
 
         <ImageView
-            android:id="@+id/btn_cancel"
+            android:id="@+id/btn_delete"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:src="@drawable/baseline_cancel_24"
+            android:src="@drawable/baseline_delete_forever_24"
             android:layout_margin="4dp"/>
         <TextView
+            android:id="@+id/tv_tag_title"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="메모에 태그 추가하기"

@@ -5,18 +5,23 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.os.Vibrator
 import android.provider.Settings
+import android.text.method.MovementMethod
 import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnAttachStateChangeListener
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
@@ -47,25 +52,21 @@ import kotlin.collections.HashMap
 class MainActivity : AppCompatActivity() {
 
     val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-
-    //    val vcAdapter by lazy { VCalendarAdapter(initDaylist(setNow())) }
     val homeAdapter by lazy { MainRecyclerAdapter(this@MainActivity, memos) }
+    lateinit var pref: SharedPreferences
 
     var memos = mutableListOf<MemoItem>()
-
-    var dates = mutableListOf<String>()
-    var cal = Calendar.getInstance()
-    var n = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         setRecycler()
-
         verifyStoragePermissions(this@MainActivity)
+
+        pref = this@MainActivity.getSharedPreferences("userData",Context.MODE_PRIVATE)
+
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
-//        binding.layoutMY.setOnClickListener { openMonthlyCalendar() }
         binding.etKw.setOnKeyListener { v, keyCode, event ->
             when (keyCode) {
                 KeyEvent.KEYCODE_ENTER -> {
@@ -81,10 +82,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.swipe.setOnRefreshListener {
-            loadMemo()
+            if (binding.mainTb.title.equals("메모 전체보기")) loadAll()
+            else loadMemo()
             binding.swipe.isRefreshing = false
         }
-    }
+        binding.btnSetToday.setOnClickListener {  }
+    }//onCreate
 
     override fun onResume() {
         super.onResume()
@@ -94,7 +97,6 @@ class MainActivity : AppCompatActivity() {
     fun queryMemo() {
         if (binding.etKw.text != null) {
             val retrofitService = RetrofitService.newInstance()
-
             val call = retrofitService.queryMemo(binding.etKw.text.toString())
             call.enqueue(object : Callback<MutableList<MemoItem>> {
                 override fun onResponse(
@@ -125,8 +127,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loadMemo() {
+        val nickname = pref.getString("nickname","").toString()
+        val date = binding.mainTb.title.toString()
         val retrofitService = RetrofitService.newInstance()
-        val call = retrofitService.loadMemo()
+        val call = retrofitService.loadMemo(nickname, date)
         call.enqueue(object : Callback<MutableList<MemoItem>> {
             override fun onResponse(
                 call: Call<MutableList<MemoItem>>,
@@ -191,8 +195,6 @@ class MainActivity : AppCompatActivity() {
             .init(this)
 
         vcb.setOnDateClickListener { y, m, d ->
-            val selectedDay = GregorianCalendar(y, m, d)
-            if (selected.compareTo(selectedDay) != 0) selected = selectedDay //무슨 말인지 몰으갯읍니다
 
             val selDate = "$y.${DecimalFormat("00").format(m + 1)}.${DecimalFormat("00").format(d)}"
             binding.mainTb.title = selDate
@@ -213,7 +215,7 @@ class MainActivity : AppCompatActivity() {
                     val result = response.body()
                     var index = 0
 
-                    Log.d("@@@@@쿼리 결과 확인", result?.size.toString())
+                    Log.d("@@@@@쿼리 결과 확인", result.toString())
 
                     if (result != null) {
                         for (i in result) {
@@ -233,53 +235,70 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
+        var scroll = arrayListOf<Int>()
 
+        vcb.setDateWatcher { y, m, d ->
+            var recentM = binding.vMonth.text.toString().toInt()
+            var recentY = binding.vYear.text.toString().toInt()
 
-        vcb.setDateWatcher(object : DateWatcher {
-            override fun getStateForDate(y: Int, m: Int, d: Int): Int {
-                Log.d("@@@@@확인", "$y $m $d")
-
-                var year = y
-                var month = m + 1
-                var day = d
-
-
-                when(day){
-//                when (d) {
-//                    1 -> {
-//                        binding.vMonth.text = DecimalFormat("00").format(month-1)
-//                        if (binding.vMonth.text.equals("00")) {
-//                            binding.vYear.text = "${year-1}"
-//                            binding.vMonth.text = "12"
-//                        }
-//                    }
-//                    cal.getActualMaximum(month) -> {
-//                        binding.vMonth.text = DecimalFormat("00").format(month+1)
-//                        if (binding.vMonth.text.equals("00")) {
-//                            binding.vYear.text = "${year+1}"
-//                            binding.vMonth.text = "01"
-//                        }
-//                    }
-//                    else -> {
-//                        binding.vMonth.text = DecimalFormat("00").format(month)
-//                        if (binding.vMonth.text.equals())
-//                    }
+            if (scroll.size == 9) {
+                when {
+                    scroll[8] < scroll[0] -> { //상승 스크롤
+                        scroll.add(0, scroll[8])
+                        scroll.removeAt(8)
+                        scroll.removeAt(scroll.size - 1)
+                        Log.d("@@@상승", "$scroll")
+                    }
+                    scroll[8] > scroll[7] -> { //하강 스크롤
+                        scroll.add(d)
+                        scroll.removeAt(0)
+                        Log.d("@@@하강", "$scroll")
+                    }
                 }
-                return when (selected.compareTo(GregorianCalendar(y, m, d))) {
-                    0 -> CalendarDay.SELECTED
-                    else -> CalendarDay.DEFAULT
-                }
+            } else if (scroll.size < 9) {
+                scroll.add(d)
+                Log.d("@@@초기데이터 확인", "$scroll")
             }
-        })
+
+            Log.d("@@@예외 확인", "$scroll")
+
+            when (selected.compareTo(GregorianCalendar(y, m, d))) {
+                0 -> CalendarDay.SELECTED
+                else -> CalendarDay.DEFAULT
+            }
+        }
     }
 
-    fun setNow(): String { //입력된 날짜를 한국시 date로 변환
-        val now = Date(System.currentTimeMillis())
-        var sdf = SimpleDateFormat("yyyy.MM.dd", Locale.KOREAN)
-        var tz = TimeZone.getTimeZone("Asia/Seoul")
-        sdf.timeZone = tz
+    fun loadAll(){
+        val nickname = pref.getString("nickname","").toString()
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.loadAll(nickname)
+        call.enqueue(object : Callback<MutableList<MemoItem>>{
+            override fun onResponse(
+                call: Call<MutableList<MemoItem>>,
+                response: Response<MutableList<MemoItem>>
+            ) {
+                memos.clear()
+                homeAdapter.notifyDataSetChanged()
 
-        return sdf.format(now)
+                val result = response.body()
+                var index = 0
+
+                Log.d("@@@@@쿼리 결과 확인", result.toString())
+
+                if (result != null) {
+                    for (i in result) {
+                        memos.add(index, i)
+                        homeAdapter.notifyItemInserted(index)
+                        index++
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                Log.d("@@@@@@쿼리 실패 확인", "${t.message}")
+            }
+        })
     }
 
     fun toolbarListener(it: MenuItem): Boolean {
@@ -310,6 +329,11 @@ class MainActivity : AppCompatActivity() {
                         homeAdapter.notifyDataSetChanged()
                     }
                 })
+                true
+            }
+            R.id.all -> {
+                loadAll()
+                binding.mainTb.title = "메모 전체보기"
                 true
             }
             else -> {
