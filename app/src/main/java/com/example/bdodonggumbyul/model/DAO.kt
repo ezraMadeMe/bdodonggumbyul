@@ -20,7 +20,9 @@ data class MemoItem(
     @SerializedName("content")
     var content: String,
     @SerializedName("image")
-    var image: String?
+    var image: String?,
+    @SerializedName("tag")
+    var tag: String?
 )
 
 data class TagItem(

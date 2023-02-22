@@ -9,15 +9,24 @@
         android:id="@+id/time_stamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="4dp"
+        android:layout_alignParentRight="true"
         android:text="13:24" />
+
+    <TextView
+        android:id="@+id/time_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="2023.02.28"
+        android:textSize="20sp"/>
 
     <TextView
         android:id="@+id/time_tag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_margin="8dp"
+        android:layout_below="@+id/tv_cv"
+        android:layout_margin="4dp"
         android:text="######" />
 
     <androidx.cardview.widget.CardView

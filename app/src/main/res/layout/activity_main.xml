@@ -43,7 +43,8 @@
             android:layout_below="@+id/et_kw"
             android:layout_marginVertical="8dp"
             android:orientation="horizontal"
-            app:layoutManager="com.google.android.flexbox.FlexboxLayoutManager" />
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_filter_tag"/>
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipe"
@@ -100,7 +101,6 @@
 
         </LinearLayout>
 
-        <!--  header로 만들기(addheaderview)  -->
         <com.emc.verticalweekcalendar.VerticalWeekCalendar
             android:id="@+id/cv_vertical"
             android:layout_width="wrap_content"

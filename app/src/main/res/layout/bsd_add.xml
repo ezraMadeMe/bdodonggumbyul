@@ -30,9 +30,7 @@
         android:id="@+id/sel_tag"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="################"
-        android:layout_below="@+id/add_et"
-        android:visibility="gone"/>
+        android:layout_below="@+id/add_et" />
 
     <TextView
         android:id="@+id/add_date"

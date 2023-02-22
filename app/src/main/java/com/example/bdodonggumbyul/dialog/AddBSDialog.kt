@@ -3,6 +3,7 @@ package com.example.bdodonggumbyul.dialog
 import android.Manifest
 import android.app.Activity
 import android.content.*
+import android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -10,6 +11,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.Editable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -25,6 +27,8 @@ import com.bumptech.glide.Glide
 import com.example.bdodonggumbyul.MemoItem
 import com.example.bdodonggumbyul.R
 import com.example.bdodonggumbyul.activity.MainActivity
+import com.example.bdodonggumbyul.activity.MainActivity.Companion.REQUEST_FILTERED_TAGS
+import com.example.bdodonggumbyul.activity.MainActivity.Companion.REQUEST_SELECTED_TAGS
 import com.example.bdodonggumbyul.activity.SetTagActivity
 import com.example.bdodonggumbyul.databinding.BsdAddBinding
 import com.example.bdodonggumbyul.retrofit.RetrofitService
@@ -57,8 +61,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
     lateinit var binding: BsdAddBinding
     lateinit var pref: SharedPreferences
-    lateinit var editor : SharedPreferences.Editor
-
+    lateinit var editor: SharedPreferences.Editor
 
     companion object {
         fun newInstance(): AddBSDialog {
@@ -99,23 +102,63 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (arguments != null) {
+            binding.apply {
+                Log.d("@@@@번들 확인", "${arguments!!.getString("date")}")
+                this.addDate.text = arguments!!.getString("date")
+                this.addTimestamp.text = arguments!!.getString("timestamp")
+                this.selTag.text = arguments!!.getString("tag")
+                this.addEt.setText(arguments!!.getString("content"))
 
-        setDateAndTime()
+                val image = arguments!!.getString("image")
+
+                if (image != "") {
+                    this.addIv.visibility = View.VISIBLE
+                    Glide.with(requireContext()).load(image).into(this.addIv)
+                }
+            }
+        } else {
+            setDateAndTime()
+        }
         binding.addImage.setOnClickListener { addImage() }
         binding.addComplete.setOnClickListener { saveMemo() }
         binding.addTag.setOnClickListener { selectTag() }
     }
 
     fun selectTag() {
-        val intent = Intent(requireContext(), SetTagActivity::class.java)
+        val intent = Intent(this.requireContext(), SetTagActivity::class.java)
+        startActivityForResult(intent, REQUEST_FILTERED_TAGS)
+    }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when (requestCode) {
+            REQUEST_FILTERED_TAGS -> {
+                if (resultCode == Activity.RESULT_OK) {
+
+                    val result = data?.extras?.getStringArrayList("tags")
+                    Log.d("@@@@BSD 코드 확인", "$result")
+                    if (result != null) {
+                        var addedTag = ""
+                        for (i in result) {
+                            addedTag += " #${i}"
+                        }
+                        binding.selTag.text = addedTag
+                    }
+                }
+            }
+            else -> {
+                Log.d("@@@인텐트 잘못 넘어옴", "알아서 해결해보셈")
+            }
+        }
     }
 
     fun setDateAndTime() {
         binding.addDate.text = arguments!!.getString("date", binding.addDate.text.toString())
 
-        var sdf = SimpleDateFormat("HH:mm", Locale.KOREAN)
-        var tz = TimeZone.getTimeZone("Asia/Seoul")
+        val sdf = SimpleDateFormat("HH:mm", Locale.KOREAN)
+        val tz = TimeZone.getTimeZone("Asia/Seoul")
         sdf.timeZone = tz
         binding.addTimestamp.text = sdf.format(Date())//시간이 3시간 뒤로 찍힘 뭐임 //내가 해냄 고침
     }
@@ -137,14 +180,15 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
     fun saveMemo() {
 
-        val id = pref.getString("nickname","")
+        val id = pref.getString("nickname", "")
         val date = binding.addDate.text.toString()
         val timestamp = binding.addTimestamp.text.toString()
         val memo = binding.addEt.text.toString()
+        val tag = binding.selTag.text.toString()
 
         if (memo == "")
             Toast.makeText(requireContext(), "메모를 입력하세요", Toast.LENGTH_SHORT)
-            .show()
+                .show()
         else {
             val retrofitService = RetrofitService.newInstance()
             var filePart: MultipartBody.Part? = null
@@ -156,12 +200,15 @@ class AddBSDialog : BottomSheetDialogFragment() {
                 filePart = MultipartBody.Part.createFormData("image", file.name, requestBody)
             }
 
+            Log.d("@@@@태그 잘 넘어오는지 확인", tag)
+
             //dataPart의 값이 몽땅 빈값으로 넘어감 머선일이고
             var dataPart = HashMap<String, String>()
             dataPart["nickname"] = id.toString()
             dataPart["date"] = date
             dataPart["timestamp"] = timestamp
             dataPart["content"] = memo
+            dataPart["tag"] = tag
 
             val call = retrofitService.insertMemo(dataPart, filePart)
             call.enqueue(object : Callback<String> {
@@ -175,7 +222,6 @@ class AddBSDialog : BottomSheetDialogFragment() {
                     //이미지 추가를 안하는데 imagePath 처리로직이 돌아서 그중에 오류나니 이리로 오는게 당연했음...
                     //근데 이제 추가안한 이미지패스가 들어가기 시작함...
                     //php문서 새로고침한번씩 할때마다 컬럼이 추가됨
-                    Log.d("레트로핏 실패@@@@@@@", "$id _ $date _ $timestamp _ $memo")
                     Log.d("레트로핏 실패 메시지@@@@@@@", "${t.message}")
                 }
             })

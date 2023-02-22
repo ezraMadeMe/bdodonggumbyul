@@ -16,7 +16,7 @@ interface RetrofitService {
     companion object {
         private const val BASEURL = "http://ezra2022.dothome.co.kr"
 
-        val gson : Gson = GsonBuilder()
+        val gson: Gson = GsonBuilder()
             .setLenient()
             .create()
 
@@ -42,8 +42,10 @@ interface RetrofitService {
     //메모 업로드
     @Multipart
     @POST("memo/insertMemo.php")
-    fun insertMemo(@PartMap dataPart: Map<String, String>,
-                    @Part filePart: MultipartBody.Part?): Call<String>
+    fun insertMemo(
+        @PartMap dataPart: Map<String, String>,
+        @Part filePart: MultipartBody.Part?
+    ): Call<String>
 
     //유저의 모든 메모 가져오기
     @GET("memo/loadAll.php")
@@ -51,18 +53,19 @@ interface RetrofitService {
 
     //유저의 특정일자 메모 가져오기
     @GET("memo/loadMemo.php")
-    fun loadMemo(@Query("nickname") nickname: String, @Query("date") date: String): Call<MutableList<MemoItem>>
+    fun loadMemo(
+        @Query("nickname") nickname: String,
+        @Query("date") date: String
+    ): Call<MutableList<MemoItem>>
 
     //특정 키워드가 포함된 메모를 쿼리
     @GET("memo/queryMemo.php")
     fun queryMemo(@Query("content") content: String): Call<MutableList<MemoItem>>
-
-    //특정 날짜의 메모를 쿼리
-    //초기 로딩시 오늘 날짜
     @GET("memo/queryDate.php")
     fun queryDate(@Query("date") date: String): Call<MutableList<MemoItem>>
 
     //특정 태그가 포함된 메모를 쿼리
+    @GET("memo/queryTag.php")
+    fun queryTag(@Query("tag") tag: String): Call<MutableList<MemoItem>>
 
-    //작성된 새로운 메모를 서버에 추가
 }
