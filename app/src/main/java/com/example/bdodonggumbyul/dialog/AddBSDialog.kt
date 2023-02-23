@@ -103,18 +103,22 @@ class AddBSDialog : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (arguments != null) {
+
+            val prevD = arguments!!.getString("date")
+            val prevTS = arguments!!.getString("timestamp")
+            val prevT = arguments!!.getString("tag")
+            val prevTxt = arguments!!.getString("content")
+            val prevI = arguments!!.getString("image")
+
             binding.apply {
-                Log.d("@@@@번들 확인", "${arguments!!.getString("date")}")
-                this.addDate.text = arguments!!.getString("date")
-                this.addTimestamp.text = arguments!!.getString("timestamp")
-                this.selTag.text = arguments!!.getString("tag")
-                this.addEt.setText(arguments!!.getString("content"))
+                this.addDate.text = prevD
+                this.addTimestamp.text = prevTS
+                this.selTag.text = prevT
+                this.addEt.setText(prevTxt)
 
-                val image = arguments!!.getString("image")
-
-                if (image != "") {
+                if (prevI != "") {
                     this.addIv.visibility = View.VISIBLE
-                    Glide.with(requireContext()).load(image).into(this.addIv)
+                    Glide.with(requireContext()).load(prevI).into(this.addIv)
                 }
             }
         } else {

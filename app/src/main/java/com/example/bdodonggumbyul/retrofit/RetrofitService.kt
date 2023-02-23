@@ -1,7 +1,6 @@
 package com.example.bdodonggumbyul.retrofit
 
 import com.example.bdodonggumbyul.MemoItem
-import com.example.bdodonggumbyul.model.User
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.MultipartBody
@@ -49,23 +48,30 @@ interface RetrofitService {
 
     //유저의 모든 메모 가져오기
     @GET("memo/loadAll.php")
-    fun loadAll(@Query("nickname") nickname: String): Call<MutableList<MemoItem>>
+    fun loadAll(
+        @Query("id") id: Int
+    ): Call<MutableList<MemoItem>>
 
     //유저의 특정일자 메모 가져오기
-    @GET("memo/loadMemo.php")
-    fun loadMemo(
-        @Query("nickname") nickname: String,
+    @GET("memo/queryDate.php")
+    fun queryDate(
+        @Query("id") id: Int,
         @Query("date") date: String
     ): Call<MutableList<MemoItem>>
 
+
     //특정 키워드가 포함된 메모를 쿼리
     @GET("memo/queryMemo.php")
-    fun queryMemo(@Query("content") content: String): Call<MutableList<MemoItem>>
-    @GET("memo/queryDate.php")
-    fun queryDate(@Query("date") date: String): Call<MutableList<MemoItem>>
+    fun queryKeyword(
+        @Query("id") id: Int,
+        @Query("content") content: String
+    ): Call<MutableList<MemoItem>>
 
     //특정 태그가 포함된 메모를 쿼리
     @GET("memo/queryTag.php")
-    fun queryTag(@Query("tag") tag: String): Call<MutableList<MemoItem>>
+    fun queryTag(
+        @Query("id") id: Int,
+        @Query("tag") tag: String
+    ): Call<MutableList<MemoItem>>
 
 }

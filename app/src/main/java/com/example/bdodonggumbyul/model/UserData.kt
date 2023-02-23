@@ -2,11 +2,11 @@ package com.example.bdodonggumbyul.model
 
 import com.google.gson.annotations.SerializedName
 
-data class User(
+data class UserData(
+    @SerializedName("seq")
+    var seq: String,
     @SerializedName("userId")
-    val userId: String,
+    var userId: String,
     @SerializedName("nickname")
-    val nickname: String,
-    @SerializedName("password")
-    val password: String
+    var nickname: String
 )
