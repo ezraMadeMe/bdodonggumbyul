@@ -102,7 +102,6 @@ class SetTagActivity : AppCompatActivity() {
                         view.isSelected = false
                         isSelected.remove(tags[position])
                         isSelectedKey.remove(keys[position])
-                        Log.d("@@@ 선택한 태그 확인22", isSelected[position])
                     }
                 }
             }
@@ -138,10 +137,9 @@ class SetTagActivity : AppCompatActivity() {
     }
 
     fun doneEvent() {
-        editor.putString("selected_tag", gson.toJson(isSelected)).commit()
-        Log.d("@@@@pref done 확인", isSelected.toString())
         val intent = Intent(this@SetTagActivity, MainActivity::class.java)
         intent.putExtra("tags", gson.toJson(isSelected))
+        Log.d("@@@보내는 태그 확인","$isSelected")
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

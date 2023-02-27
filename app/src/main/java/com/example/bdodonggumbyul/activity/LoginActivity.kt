@@ -33,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("@@json pref 파싱", pref.getString("user_data", "").toString())
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 startActivity(intent)
+                finish()
             }
         }
     }
@@ -49,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 val result = response.body()
                 if (result != null) {
-                    Log.d("@@@@레트로핏 결과 확인", "${result}")
+                    Log.d("@@@@레트로핏 결과 확인", "$result")
 
                     if (!result.equals("이미 존재하는 아이디입니다") && !result.equals("이미 존재하는 닉네임입니다")) {
                         Toast.makeText(this@LoginActivity, "$nickname 님 환영합니다!", Toast.LENGTH_SHORT)
@@ -58,10 +59,10 @@ class LoginActivity : AppCompatActivity() {
                         val string = mutableMapOf<String, String>()
                         string["0"] = "전체"
                         val gson = GsonBuilder().create()
-                        val initTag = gson.toJson(string)
 
                         editor.putString("user_data", result)
-                            .putString("tag_list", initTag)
+                            .putString("tag_list", gson.toJson(string))
+                            .putString("memo_num","0")
                             .commit()
 
                         val intent = Intent(this@LoginActivity, MainActivity::class.java)
@@ -74,6 +75,7 @@ class LoginActivity : AppCompatActivity() {
                         Toast.makeText(this@LoginActivity, "중복된 닉네임입니다", Toast.LENGTH_SHORT).show()
                     }
                 }
+                this@LoginActivity.finish()
             }
 
             override fun onFailure(call: Call<String>, t: Throwable) {

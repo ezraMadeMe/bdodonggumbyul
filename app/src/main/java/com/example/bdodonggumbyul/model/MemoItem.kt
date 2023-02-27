@@ -11,6 +11,8 @@ import com.google.gson.annotations.SerializedName
 //RoomDB에 db list를 넣고 빼는 법 검색(tag)
 
 data class MemoItem(
+    @SerializedName("memo_id")
+    var memoId: String,
     @SerializedName("date")
     var date: String,
     @SerializedName("timestamp")
@@ -19,7 +21,7 @@ data class MemoItem(
     var content: String,
     @SerializedName("image")
     var image: String?,
-    @SerializedName("tag")
+    @SerializedName("CON")
     var tag: String?
 )
 

@@ -3,14 +3,15 @@ package com.example.bdodonggumbyul.activity
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.emc.verticalweekcalendar.VerticalWeekCalendar
 import com.emc.verticalweekcalendar.model.CalendarDay
@@ -39,9 +40,10 @@ class MainActivity : AppCompatActivity() {
     val gson = GsonBuilder().create()
     val pref by lazy { this@MainActivity.getSharedPreferences("user_data", Context.MODE_PRIVATE) }
     val editor by lazy { pref.edit() }
-    val id : Int by lazy { gson.fromJson(pref.getString("user_data",""),UserData::class.java).seq.toInt() }
+    val id: Int by lazy { gson.fromJson(pref.getString("user_data", ""), UserData::class.java).seq.toInt() }
 
     var memos = mutableListOf<MemoItem>()
+    val title by lazy { binding.mainTb.title.toString() }
 
     companion object {
         const val REQUEST_DATE_PICKER = 1024
@@ -58,64 +60,42 @@ class MainActivity : AppCompatActivity() {
         setListenter()
 
         verifyStoragePermissions(this@MainActivity)
+
+        if (title == "메모 전체보기") loadAll()
+        else queryDate(title)
     }//onCreate
 
-    override fun onResume() {
-        super.onResume()
-        if (binding.mainTb.title.equals("메모 전체보기")) loadAll()
-        else queryDate(binding.mainTb.title.toString())
-    }
-
-    fun setListenter(){
+    fun setListenter() {
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
-        binding.vYmLayout.setOnClickListener {  }
         binding.etKw.setOnKeyListener { v, keyCode, event ->
             when (keyCode) {
-                KeyEvent.KEYCODE_ENTER -> {
-                    if (event.action == KeyEvent.ACTION_DOWN) { //분기처리해서 중복입력 방지 //내가 해냄
-                        queryMemo()
-                    }
+                KeyEvent.KEYCODE_ENTER -> { //분기처리해서 중복입력 방지 //내가 해냄
+                    if (event.action == KeyEvent.ACTION_DOWN) queryKeyword()
                     true
                 }
                 else -> { false }
             }
         }
         binding.swipe.setOnRefreshListener {
-            if (binding.mainTb.title.equals("메모 전체보기")) loadAll()
-            else queryDate(binding.mainTb.title.toString())
+            if (title == "메모 전체보기") loadAll()
+            else queryDate(title)
             binding.swipe.isRefreshing = false
         }
-        binding.btnSetToday.setOnClickListener { }
     }
 
-    fun queryMemo() {
-        val keyword = binding.etKw.text
+    fun queryKeyword() {
+        val keyword = binding.etKw.text.toString()
 
         if (keyword != null) {
             val retrofitService = RetrofitService.newInstance()
-            val call = retrofitService.queryKeyword(id, keyword.toString())
+            val call = retrofitService.queryKeyword(id, keyword)
 
             call.enqueue(object : Callback<MutableList<MemoItem>> {
-                override fun onResponse(
-                    call: Call<MutableList<MemoItem>>,
-                    response: Response<MutableList<MemoItem>>
-                ) {
-                    Log.d("@@@@@@@@쿼리 문자열 넘어오는지 확인", "${response.body()}")
-                    memos.clear()
-                    homeAdapter.notifyDataSetChanged()
-                    val result = response.body()
-                    var index = 0
-                    if (result != null) {
-                        for (i in result) {
-                            memos.add(index, result[index])
-                            homeAdapter.notifyItemInserted(index)
-                            index++
-                        }
-                    }
+                override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                    updateMemos(response)
                 }
-
                 override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
-                    Log.d("@@@@@@키워드 쿼리 실패 확인", "error : ${t.message}")
+                    failureMessage(t)
                 }
             })
         } else {
@@ -125,44 +105,211 @@ class MainActivity : AppCompatActivity() {
 
     fun setHomeRecycler() {
         binding.mainTb.title = SimpleDateFormat("yyyy.MM.dd").format(Date())
-
         binding.homeRv.adapter = homeAdapter
+
         homeAdapter.setItemClickListener(object : MainRecyclerAdapter.OnClickListener {
             override fun onClick(view: View, position: Int) {
-                val d = AddBSDialog.newInstance()
                 val bundle = Bundle()
+                openAddBSDialog("", bundle, position)
+            }
+        })
+        homeAdapter.setItemLongClickListener(object : MainRecyclerAdapter.OnLongClickListener{
+            override fun onLongClick(view: View, position: Int): Boolean {
+                AlertDialog.Builder(this@MainActivity)
+                    .setMessage("${memos[position].content} 메모를 삭제합니다. 계속하시겠습니까?")
+                    .setPositiveButton("네", object : DialogInterface.OnClickListener{
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            //메모 삭제 레트로핏
+                            deleteMemo(memos[position])
+                            dialog?.dismiss()
+                        }
+                    })
+                    .setNegativeButton("아니오", object : DialogInterface.OnClickListener{
+                        override fun onClick(dialog: DialogInterface?, which: Int) {
+                            dialog?.dismiss()
+                        }
+                    }).show()
+                return true
+            }
+        })
+    }
 
+    fun deleteMemo(memoItem: MemoItem){
+        val memoid = memoItem.memoId
+
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.deleteMemo(memoid)
+        call.enqueue(object : Callback<String>{
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                TODO("Not yet implemented")
+            }
+
+        })
+    }
+
+    fun queryDate(date: String) {
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.queryDate(id, date)
+        call.enqueue(object : Callback<MutableList<MemoItem>> {
+            override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                updateMemos(response)
+            }
+
+            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                failureMessage(t)
+            }
+        })
+    }
+
+    fun loadAll() {
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.loadAll(id)
+        call.enqueue(object : Callback<MutableList<MemoItem>> {
+            override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                updateMemos(response)
+            }
+
+            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                failureMessage(t)
+            }
+        })
+    }
+
+    var selectedTags = arrayListOf<String>()
+    val selTagAdapter = SelectedTagAdapter(selectedTags)
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            REQUEST_DATE_PICKER -> {
+                if (resultCode == Activity.RESULT_OK) {
+
+                }
+            }
+            REQUEST_FILTERED_TAGS -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    val intent = data?.extras?.getString("tags")
+                    if (intent != null) {
+                        val tags = arrayListOf<String>()
+                        val result = gson.fromJson(intent, tags::class.java)
+                        var tagList = ""
+                        for (i in result) { tagList += " #$i" }
+                        queryTag(id, tagList)
+
+                        selectedTags.clear()
+
+                        val list = mutableListOf<String>()
+
+                        for (i in gson.fromJson(intent, list::class.java)) {
+                            selectedTags.add(i)
+                            selTagAdapter.notifyDataSetChanged()
+                        }
+                        binding.rvTag.adapter = selTagAdapter
+                        binding.rvTag.visibility = View.VISIBLE
+                        selTagAdapter.setFilterTagClickListener(object :
+                            SelectedTagAdapter.OnFilterTagClickListener {
+                            override fun onClick(view: View, posision: Int) {
+                                //여기서 레트로핏
+                                selectedTags.remove(selectedTags[posision])
+                                selTagAdapter.notifyDataSetChanged()
+                                Log.d("@@@@필터 태그 삭제 확인", selectedTags.toString())
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+    fun queryTag(id: Int, tagList: String) {
+        val retrofitService = RetrofitService.newInstance()
+        val call = retrofitService.queryTag(id, tagList)
+
+        call.enqueue(object : Callback<MutableList<MemoItem>> {
+            override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                updateMemos(response)
+            }
+
+            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                failureMessage(t)
+            }
+        })
+    }
+
+    fun toolbarListener(it: MenuItem): Boolean {
+        return when (it.itemId) {
+            R.id.tag -> {
+                startActivityForResult(Intent(this@MainActivity, SetTagActivity::class.java), REQUEST_FILTERED_TAGS)
+                true
+            }
+            R.id.key -> {
+                binding.etKw.visibility =
+                    when (binding.etKw.visibility) {
+                        View.VISIBLE -> View.GONE
+                        else -> View.VISIBLE
+                    }
+                true
+            }
+            R.id.add -> {
+                val bundle = Bundle()
+                openAddBSDialog(title, bundle, 0)
+                true
+            }
+            R.id.all -> {
+                loadAll()
+                binding.mainTb.title = "메모 전체보기"
+                true
+            }
+            else -> {
+                Toast.makeText(this@MainActivity, "error", Toast.LENGTH_SHORT).show()
+                false
+            }
+        }
+    }
+
+    fun openAddBSDialog(date: String, bundle: Bundle, position: Int) {
+        when (date) {
+            "" -> { //홈 리사이클러뷰를 눌렀을 때
+                val memoId = memos[position].memoId
                 val date = memos[position].date
                 val timestamp = memos[position].timestamp
-                val tag = memos[position].tag
+                val tag = " #${memos[position].tag}"
                 val content = memos[position].content
                 val image = memos[position].image
                 val imgUrl = "http://ezra2022.dothome.co.kr/memo/${image}"
 
-                Log.d("@@@@번들 데이터 확인", "$date $timestamp $tag $content $image")
-
+                bundle.putString("memoId", memoId)
                 bundle.putString("date", date)
                 bundle.putString("timestamp", timestamp)
                 bundle.putString("tag", tag)
                 bundle.putString("content", content)
                 if (image != "") bundle.putString("image", imgUrl)
                 else bundle.putString("image", "")
+            }
+            "메모 전체보기" -> { //add 버튼을 눌렀을 때 11
+                bundle.putString("date", SimpleDateFormat("yyyy.MM.dd").format(Date()))
+            }
+            else -> { //add 버튼을 눌렀을 때 22
+                bundle.putString("date", date)
+            }
+        }
 
-                d.arguments = bundle
-                d.show(supportFragmentManager, attributionTag)
-                d.setOnClickListener(object : AddBSDialog.CompleteClickListener {
-                    override fun onClick(memo: MemoItem) {
-                        //특정 메모가 수정되었음을 notify
-                        //UPDATE
-                        homeAdapter.notifyItemChanged(position)
-                    }
-                })
-                //특정 메모에 대한 자세히 보기 다이얼로그 팝업
+        val d = AddBSDialog.newInstance()
+
+        d.arguments = bundle
+        d.setOnClickListener(object : AddBSDialog.CompleteClickListener {
+            override fun onClick(memo: MemoItem) {
+                memos.add(memo)
+                homeAdapter.notifyDataSetChanged()
             }
         })
+        d.show(supportFragmentManager, attributionTag)
     }
 
-    fun setCalendarRecycler(){
+    fun setCalendarRecycler() {
         var selected = GregorianCalendar()
 
         val vcb = VerticalWeekCalendar.Builder()
@@ -204,199 +351,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun queryDate(date: String){
-        val retrofitService = RetrofitService.newInstance()
-        val call = retrofitService.queryDate(id, date)
-        call.enqueue(object : Callback<MutableList<MemoItem>> {
-            override fun onResponse(
-                call: Call<MutableList<MemoItem>>,
-                response: Response<MutableList<MemoItem>>
-            ) {
-                memos.clear()
-                homeAdapter.notifyDataSetChanged()
+    fun updateMemos(response: Response<MutableList<MemoItem>>){
+        memos.clear()
+        homeAdapter.notifyDataSetChanged()
 
-                val result = response.body()
-                var index = 0
-
-                Log.d("@@@@@쿼리 결과 확인", result.toString())
-
-                if (result != null) {
-                    for (i in result) {
-                        memos.add(index, i)
-                        homeAdapter.notifyItemInserted(index)
-                        index++
-                    }
-                }
-            }
-
-            override fun onFailure(
-                call: Call<MutableList<MemoItem>>,
-                t: Throwable
-            ) {
-                Log.d("@@@@@@쿼리 실패 확인", "${t.message}")
-            }
-        })
-    }
-
-    fun loadAll() {
-        val retrofitService = RetrofitService.newInstance()
-        val call = retrofitService.loadAll(id)
-        call.enqueue(object : Callback<MutableList<MemoItem>> {
-            override fun onResponse(
-                call: Call<MutableList<MemoItem>>,
-                response: Response<MutableList<MemoItem>>
-            ) {
-                memos.clear()
-                homeAdapter.notifyDataSetChanged()
-
-                val result = response.body()
-                var index = 0
-
-                Log.d("@@@@@쿼리 결과 확인", result.toString())
-
-                if (result != null) {
-                    for (i in result) {
-                        memos.add(index, i)
-                        homeAdapter.notifyItemInserted(index)
-                        index++
-                    }
-                }
-            }
-
-            override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
-                Log.d("@@@@@@쿼리 실패 확인", "${t.message}")
-            }
-        })
-    }
-
-    var selectedTags = arrayListOf<String>()
-    val selTagAdapter = SelectedTagAdapter(selectedTags)
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        Log.d("@@@받아오 태그","${requestCode}+ ${resultCode}")
-        when (requestCode) {
-            REQUEST_DATE_PICKER -> {
-                if (resultCode == Activity.RESULT_OK) {
-
-                }
-            }
-            REQUEST_FILTERED_TAGS -> {
-                if (resultCode == Activity.RESULT_OK) {
-                    val intent = data?.extras?.getString("tags")
-                    if (intent != null) {
-
-                        var tags = ""
-                        for (i in intent){ tags += " #$i" }
-                        Log.d("@@@@받아온 태그 확인",tags)
-
-                        val retrofitService = RetrofitService.newInstance()
-                        val call = retrofitService.queryTag(id, tags)
-
-                        call.enqueue(object : Callback<MutableList<MemoItem>>{
-                            override fun onResponse(
-                                call: Call<MutableList<MemoItem>>,
-                                response: Response<MutableList<MemoItem>>
-                            ) {
-                                 val result = response.body()
-                                if (result != null){
-                                    var index = 0
-                                    memos.clear()
-                                    homeAdapter.notifyDataSetChanged()
-
-                                    for (i in result){
-                                        memos.add(index, i)
-                                        index++
-                                        homeAdapter.notifyDataSetChanged()
-                                    }
-                                }
-                            }
-
-                            override fun onFailure(
-                                call: Call<MutableList<MemoItem>>,
-                                t: Throwable
-                            ) {
-                                Log.d("@@@@태그 쿼리 실패 확인","${t.message}")
-                            }
-                        })
-                        selectedTags.clear()
-
-                        val list = mutableListOf<String>()
-
-                        for (i in gson.fromJson(intent,list::class.java)) {
-                            selectedTags.add(i)
-                            selTagAdapter.notifyDataSetChanged()
-                        }
-                        binding.rvTag.adapter = selTagAdapter
-                        binding.rvTag.visibility = View.VISIBLE
-                        selTagAdapter.setFilterTagClickListener(object :
-                            SelectedTagAdapter.OnFilterTagClickListener {
-                            override fun onClick(view: View, posision: Int) {
-                                //여기서 레트로핏
-                                selectedTags.remove(selectedTags[posision])
-                                selTagAdapter.notifyDataSetChanged()
-                                Log.d("@@@@필터 태그 삭제 확인", selectedTags.toString())
-                            }
-                        })
-                    }
-                }
+        val result = response.body()
+        if (result != null) {
+            for (i in result) {
+                memos.add(0, i)
+                homeAdapter.notifyItemInserted(0)
             }
         }
     }
-
-    fun toolbarListener(it: MenuItem): Boolean {
-        return when (it.itemId) {
-            R.id.tag -> {
-                val intent = Intent(this@MainActivity, SetTagActivity::class.java)
-                startActivityForResult(intent, REQUEST_FILTERED_TAGS)
-                true
-            }
-            R.id.key -> {
-                binding.etKw.visibility =
-                    when (binding.etKw.visibility) {
-                        View.VISIBLE -> View.GONE
-                        else -> View.VISIBLE
-                    }
-                true
-            }
-            R.id.add -> {
-                openAddBSDialog()
-                true
-            }
-            R.id.all -> {
-                loadAll()
-                binding.mainTb.title = "메모 전체보기"
-                true
-            }
-            else -> {
-                Toast.makeText(this@MainActivity, "error", Toast.LENGTH_SHORT).show()
-                false
-            }
-        }
-    }
-
-    fun openAddBSDialog(){
-        val sdf = SimpleDateFormat("HH:mm", Locale.KOREAN)
-        val tz = TimeZone.getTimeZone("Asia/Seoul")
-        sdf.timeZone = tz
-        val timestamp = sdf.format(Date())//시간이 3시간 뒤로 찍힘 뭐임 //내가 해냄 고침
-
-        val d = AddBSDialog.newInstance()
-        val bundle = Bundle()
-        if (binding.mainTb.title.toString() == "메모 전체보기")
-            bundle.putString("date", SimpleDateFormat("yyyy.MM.dd").format(Date()))
-        else bundle.putString("date", binding.mainTb.title.toString())
-        bundle.putString("timestamp", timestamp)
-        bundle.putString("image","")
-        d.arguments = bundle
-        d.show(supportFragmentManager, attributionTag)
-        d.setOnClickListener(object : AddBSDialog.CompleteClickListener {
-            override fun onClick(memo: MemoItem) {
-                Toast.makeText(this@MainActivity, memo.content, Toast.LENGTH_SHORT).show()
-                memos.add(memo)
-                homeAdapter.notifyDataSetChanged()
-            }
-        })
+    fun failureMessage(t: Throwable){
+        Log.d("@@일단 뭔가를 실패한 것 같음", "${t.message}")
     }
 
     //use-permission 으로도 해결이 안돼서 수동으로 퍼미션 받는 로직

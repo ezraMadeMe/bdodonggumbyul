@@ -38,6 +38,11 @@ interface RetrofitService {
         @Field("password") password: String
     ): Call<String>
 
+    @DELETE("memo/deleteMemo.php")
+    fun deleteMemo(
+        @Query("memo_id") memoId: String
+    ): Call<String>
+
     //메모 업로드
     @Multipart
     @POST("memo/insertMemo.php")
@@ -73,5 +78,4 @@ interface RetrofitService {
         @Query("id") id: Int,
         @Query("tag") tag: String
     ): Call<MutableList<MemoItem>>
-
 }

@@ -1,17 +1,12 @@
 package com.example.bdodonggumbyul.dialog
 
-import android.Manifest
 import android.app.Activity
 import android.content.*
-import android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
-import android.provider.Settings
 import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,22 +14,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.registerForActivityResult
-import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
-import androidx.loader.content.CursorLoader
 import com.bumptech.glide.Glide
 import com.example.bdodonggumbyul.MemoItem
 import com.example.bdodonggumbyul.R
-import com.example.bdodonggumbyul.activity.MainActivity
 import com.example.bdodonggumbyul.activity.MainActivity.Companion.REQUEST_FILTERED_TAGS
-import com.example.bdodonggumbyul.activity.MainActivity.Companion.REQUEST_SELECTED_TAGS
 import com.example.bdodonggumbyul.activity.SetTagActivity
 import com.example.bdodonggumbyul.databinding.BsdAddBinding
+import com.example.bdodonggumbyul.model.UserData
 import com.example.bdodonggumbyul.retrofit.RetrofitService
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.google.gson.GsonBuilder
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -57,11 +46,16 @@ class AddBSDialog : BottomSheetDialogFragment() {
         this.onClickListener = listener
     }
 
+    val gson = GsonBuilder().create()
+    val pref by lazy { activity!!.getSharedPreferences("user_data", Context.MODE_PRIVATE) }
+    val editor by lazy { pref.edit() }
+    lateinit var memonum: String
+
+    lateinit var prevTxt: String
+
     var imagePath = ""
 
     lateinit var binding: BsdAddBinding
-    lateinit var pref: SharedPreferences
-    lateinit var editor: SharedPreferences.Editor
 
     companion object {
         fun newInstance(): AddBSDialog {
@@ -86,8 +80,6 @@ class AddBSDialog : BottomSheetDialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.CustomBottomSheetDialogTheme)
-        pref = activity!!.getSharedPreferences("userData", Context.MODE_PRIVATE)
-        editor = pref.edit()
     }
 
     override fun onCreateView(
@@ -102,12 +94,24 @@ class AddBSDialog : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (arguments != null) {
+        prevTxt = ""
+        memonum = pref.getString("memo_num", "")!!
+        setArguments()
+        setDateAndTime()
+        binding.addImage.setOnClickListener { addImage() }
+        binding.addTag.setOnClickListener { selectTag() }
+        binding.addComplete.setOnClickListener { insertMemo() }
+    }
 
+    fun setArguments(){
+        if (arguments!!.getString("memoId") != null) {
+            val id =
+                gson.fromJson(pref.getString("user_data", ""), UserData::class.java).seq.toInt()
+            memonum = arguments!!.getString("memoId")!!
             val prevD = arguments!!.getString("date")
             val prevTS = arguments!!.getString("timestamp")
             val prevT = arguments!!.getString("tag")
-            val prevTxt = arguments!!.getString("content")
+            prevTxt = arguments!!.getString("content")!!
             val prevI = arguments!!.getString("image")
 
             binding.apply {
@@ -121,17 +125,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
                     Glide.with(requireContext()).load(prevI).into(this.addIv)
                 }
             }
-        } else {
-            setDateAndTime()
         }
-        binding.addImage.setOnClickListener { addImage() }
-        binding.addComplete.setOnClickListener { saveMemo() }
-        binding.addTag.setOnClickListener { selectTag() }
-    }
-
-    fun selectTag() {
-        val intent = Intent(this.requireContext(), SetTagActivity::class.java)
-        startActivityForResult(intent, REQUEST_FILTERED_TAGS)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -141,14 +135,16 @@ class AddBSDialog : BottomSheetDialogFragment() {
             REQUEST_FILTERED_TAGS -> {
                 if (resultCode == Activity.RESULT_OK) {
 
-                    val result = data?.extras?.getStringArrayList("tags")
+                    val result = data?.extras?.getString("tags")
+                    val arr = arrayListOf<String>()
+                    var string = ""
                     Log.d("@@@@BSD 코드 확인", "$result")
                     if (result != null) {
-                        var addedTag = ""
-                        for (i in result) {
-                            addedTag += " #${i}"
+                        var addedTag = gson.fromJson(result, arr::class.java)
+                        for (i in addedTag) {
+                            string += " #${i}"
                         }
-                        binding.selTag.text = addedTag
+                        binding.selTag.text = string
                     }
                 }
             }
@@ -182,9 +178,8 @@ class AddBSDialog : BottomSheetDialogFragment() {
         return result
     }
 
-    fun saveMemo() {
-
-        val id = pref.getString("nickname", "")
+    fun insertMemo() {
+        val id = gson.fromJson(pref.getString("user_data", ""), UserData::class.java).seq.toInt()
         val date = binding.addDate.text.toString()
         val timestamp = binding.addTimestamp.text.toString()
         val memo = binding.addEt.text.toString()
@@ -204,21 +199,27 @@ class AddBSDialog : BottomSheetDialogFragment() {
                 filePart = MultipartBody.Part.createFormData("image", file.name, requestBody)
             }
 
-            Log.d("@@@@태그 잘 넘어오는지 확인", tag)
-
             //dataPart의 값이 몽땅 빈값으로 넘어감 머선일이고
-            var dataPart = HashMap<String, String>()
-            dataPart["nickname"] = id.toString()
+            val dataPart = HashMap<String, String>()
+            dataPart["seq"] = id.toString()
+            dataPart["memo_id"] = memonum
             dataPart["date"] = date
             dataPart["timestamp"] = timestamp
             dataPart["content"] = memo
             dataPart["tag"] = tag
+
+            Log.d("@@dataPart 확인","$dataPart")
 
             val call = retrofitService.insertMemo(dataPart, filePart)
             call.enqueue(object : Callback<String> {
                 override fun onResponse(call: Call<String>, response: Response<String>) {
                     //토스트도 안 뜨고 이미지url말고는 저장이 안됨...  //당연함 업로드 실패하니까...
                     Log.d("레트로핏 성공@@@@@@@", "${response.body()}")
+                    if (response.body() == "메모 업로드 성공"){
+                        val add = memonum.toInt() + 1
+                        editor.remove("memo_num")
+                            .putString("memo_num", add.toString()).commit()
+                    }
                     dismiss()
                 }
 
@@ -231,44 +232,13 @@ class AddBSDialog : BottomSheetDialogFragment() {
             })
         }
     }
-
+    fun selectTag() {
+        val intent = Intent(this.requireContext(), SetTagActivity::class.java)
+        startActivityForResult(intent, REQUEST_FILTERED_TAGS)
+    }
     fun addImage() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         resultLauncher.launch(intent)
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
