@@ -37,13 +37,14 @@ interface RetrofitService {
         @Field("nickname") nickname: String,
         @Field("password") password: String
     ): Call<String>
-
-    @DELETE("memo/deleteMemo.php")
+    //메모 삭제
+    @GET("memo/deleteMemo.php")
     fun deleteMemo(
+        @Query("id") id: Int,
         @Query("memo_id") memoId: String
     ): Call<String>
 
-    //메모 업로드
+    //메모 업로드 또는 업데이트
     @Multipart
     @POST("memo/insertMemo.php")
     fun insertMemo(
@@ -51,31 +52,18 @@ interface RetrofitService {
         @Part filePart: MultipartBody.Part?
     ): Call<String>
 
-    //유저의 모든 메모 가져오기
-    @GET("memo/loadAll.php")
-    fun loadAll(
-        @Query("id") id: Int
-    ): Call<MutableList<MemoItem>>
-
-    //유저의 특정일자 메모 가져오기
-    @GET("memo/queryDate.php")
-    fun queryDate(
+    //유저의 모든/특정일자의/특정 태그가 달린/특정 일자+태그가 달린 메모 가져오기
+    @GET("memo/queryDateNTag.php")
+    fun queryDateNTag(
         @Query("id") id: Int,
-        @Query("date") date: String
+        @Query("date") date: String,
+        @Query("tag") tag: String
     ): Call<MutableList<MemoItem>>
-
 
     //특정 키워드가 포함된 메모를 쿼리
     @GET("memo/queryMemo.php")
     fun queryKeyword(
         @Query("id") id: Int,
-        @Query("content") content: String
-    ): Call<MutableList<MemoItem>>
-
-    //특정 태그가 포함된 메모를 쿼리
-    @GET("memo/queryTag.php")
-    fun queryTag(
-        @Query("id") id: Int,
-        @Query("tag") tag: String
+        @Query("keyword") keyword: String
     ): Call<MutableList<MemoItem>>
 }

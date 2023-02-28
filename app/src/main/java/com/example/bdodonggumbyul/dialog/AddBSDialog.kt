@@ -8,9 +8,11 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -215,7 +217,7 @@ class AddBSDialog : BottomSheetDialogFragment() {
                 override fun onResponse(call: Call<String>, response: Response<String>) {
                     //토스트도 안 뜨고 이미지url말고는 저장이 안됨...  //당연함 업로드 실패하니까...
                     Log.d("레트로핏 성공@@@@@@@", "${response.body()}")
-                    if (response.body() == "메모 업로드 성공"){
+                    if (response.body()!!.contains("메모 업로드 성공")){
                         val add = memonum.toInt() + 1
                         editor.remove("memo_num")
                             .putString("memo_num", add.toString()).commit()

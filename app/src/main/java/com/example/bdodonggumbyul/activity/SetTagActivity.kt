@@ -10,9 +10,12 @@ import android.text.TextUtils.lastIndexOf
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.get
+import com.example.bdodonggumbyul.R
 import com.example.bdodonggumbyul.adapter.SetTagAdapter
 import com.example.bdodonggumbyul.databinding.ActivitySetTagBinding
 import com.example.bdodonggumbyul.model.UserData
@@ -36,17 +39,32 @@ class SetTagActivity : AppCompatActivity() {
     var keys = mutableListOf<String>()
     lateinit var tagAdapter: SetTagAdapter
     var index by Delegates.notNull<Int>()
-    val id: Int by lazy { gson.fromJson(pref.getString("user_data", ""), UserData::class.java).seq.toInt() }
+    val id: Int by lazy {
+        gson.fromJson(
+            pref.getString("user_data", ""),
+            UserData::class.java
+        ).seq.toInt()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
         setRecycler()
 
         //done cancel 버튼 누르면 선택상태 저장하고 액티비티 종료
         binding.btnDone.setOnClickListener { doneEvent() }
-        binding.btnDelete.setOnClickListener { deleteTag() }
+//        binding.btnDelete.setOnClickListener { deleteTag() }
         //rv내 태그 선택시 다중선택가능&색상 변화
+
+        binding.tagEt.setOnKeyListener { v, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(binding.tagEt.windowToken, 0)
+                true
+            }
+            false
+        }
     }
 
     var isSelected = arrayListOf<String>()
@@ -92,17 +110,49 @@ class SetTagActivity : AppCompatActivity() {
                 when (view.isSelected) {
                     false -> {
                         if (position == 0) {
-                            //전체 태그 재외한 모든 태그를 미선택 상태로 전환
+                            isSelected.clear()
+                            isSelectedKey.clear()
+
+                            isSelected.add("")
+                            isSelectedKey.add("")
+
+                            //전체 태그를 재외한 모든 태그를 미선택 상태로 전환
+                            for (i in 1 until tags.size) {
+                                binding.rvTag[i].isSelected = false
+                                Log.d("@@@rv 텍스트", "$i + ${binding.rvTag[i].isSelected}")
+                            }
+                            view.isSelected = true
+                            Log.d("@@전체태그 선택", "$isSelected + $isSelectedKey")
+                        } else {
+                            isSelected.remove("")
+                            isSelectedKey.remove("")
+
+                            isSelected.add(tags[position])
+                            isSelectedKey.add(keys[position])
+
+                            binding.rvTag[0].isSelected = false
+                            view.isSelected = true
+                            Log.d("@@개별태그 선택", "$isSelected + $isSelectedKey")
                         }
-                        isSelected.add(tags[position])
-                        isSelectedKey.add(keys[position])
-                        view.isSelected = true
                     }
                     true -> {
                         view.isSelected = false
                         isSelected.remove(tags[position])
                         isSelectedKey.remove(keys[position])
                     }
+                }
+                when {
+                    !isSelected.contains("") -> {
+                        binding.btnDelete.setImageResource(R.drawable.baseline_delete_forever_24)
+                    }
+                    else -> {
+                        binding.btnDelete.setImageResource(R.drawable.baseline_exit_to_app_24)
+                    }
+                }
+                if (binding.btnDelete.drawable.equals(R.drawable.baseline_exit_to_app_24)){
+                    binding.btnDelete.setOnClickListener { finish() }
+                }else{
+                    binding.btnDelete.setOnClickListener { deleteTag() }
                 }
             }
         })
@@ -114,11 +164,15 @@ class SetTagActivity : AppCompatActivity() {
             .setPositiveButton("네", object : DialogInterface.OnClickListener {
                 override fun onClick(dialog: DialogInterface?, which: Int) {
                     for (i in isSelectedKey) {
-                        if (i != "0"){
+                        if (i != "0") {
                             tagMap.remove(i)
                             tagAdapter.notifyDataSetChanged()
-                        }else{
-                            Toast.makeText(this@SetTagActivity, "전체 태그는 삭제할 수 없습니다", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                this@SetTagActivity,
+                                "전체 태그는 삭제할 수 없습니다",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                     Log.d("@@@map 데이터 삭제 확인", "${tagMap.values}")
@@ -139,7 +193,7 @@ class SetTagActivity : AppCompatActivity() {
     fun doneEvent() {
         val intent = Intent(this@SetTagActivity, MainActivity::class.java)
         intent.putExtra("tags", gson.toJson(isSelected))
-        Log.d("@@@보내는 태그 확인","$isSelected")
+        Log.d("@@@보내는 태그 확인", "$isSelected")
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

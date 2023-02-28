@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="false"
+    android:nestedScrollingEnabled="true"
     tools:context=".activity.MainActivity">
 
     <RelativeLayout
@@ -34,7 +35,8 @@
             android:includeFontPadding="true"
             android:inputType="text"
             android:maxLines="1"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:visibility="gone"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_tag"
@@ -44,7 +46,7 @@
             android:layout_marginVertical="8dp"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_filter_tag"/>
+            tools:listitem="@layout/item_filter_tag" />
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipe"
@@ -62,42 +64,51 @@
                 tools:listitem="@layout/item_home" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <TextView
+            android:id="@+id/result_alert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="결과 없는 저기 그거"
+            android:textSize="32sp"
+            android:layout_centerInParent="true"
+            android:textColor="@color/black" />
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/drawer_content"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_gravity="start">
+        android:layout_gravity="start"
+        android:orientation="vertical">
         <!-- layout_gravity 수동으로 써넣어야함 뒤질래? -->
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="vertical"
+            android:id="@+id/v_ym_layout"
             android:layout_width="72dp"
             android:layout_height="wrap_content"
             android:background="#8F8F8F"
-            android:padding="8dp"
-            android:id="@+id/v_ym_layout">
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <TextView
                 android:id="@+id/v_year"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:text="2023"
-                android:textSize="24sp"
-                android:layout_gravity="center"/>
+                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/v_month"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:drawablePadding="0dp"
                 android:includeFontPadding="false"
                 android:text="02"
                 android:textSize="40sp"
-                android:textStyle="bold"
-                android:layout_gravity="center"
-                android:drawablePadding="0dp"/>
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -105,19 +116,18 @@
             android:id="@+id/cv_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:selectedBackground="@color/black"
+            android:layout_above="@+id/btn_set_today"
             android:layout_below="@+id/v_ym_layout"
-            android:layout_above="@+id/btn_set_today" />
+            app:selectedBackground="@color/black" />
 
         <ImageView
             android:id="@+id/btn_set_today"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:src="@drawable/baseline_today_24"
+            android:layout_alignParentBottom="true"
             android:background="#8F8F8F"
             android:padding="12dp"
-            android:layout_alignParentBottom="true"/>
+            android:src="@drawable/baseline_today_24" />
 
     </RelativeLayout>
-
 </androidx.drawerlayout.widget.DrawerLayout>

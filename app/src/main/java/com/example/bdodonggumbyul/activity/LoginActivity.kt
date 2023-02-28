@@ -1,10 +1,13 @@
 package com.example.bdodonggumbyul.activity
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bdodonggumbyul.databinding.ActivityLoginBinding
@@ -25,6 +28,15 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        binding.etPw.setOnKeyListener { v, keyCode, event ->
+            if (event.action ==KeyEvent.ACTION_DOWN && keyCode ==KeyEvent.KEYCODE_ENTER){
+                val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(binding.etPw.windowToken, 0)
+                true
+            }
+            false
+        }
 
         binding.btnLogin.setOnClickListener { loginLogic() }
         when (pref.getString("user_data", "")) {
