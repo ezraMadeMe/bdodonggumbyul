@@ -6,28 +6,20 @@
     android:padding="4dp">
 
     <TextView
-        android:id="@+id/time_stamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:layout_alignParentRight="true"
-        android:text="13:24" />
-
-    <TextView
-        android:id="@+id/time_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="2023.02.28"
-        android:textSize="20sp"/>
-
-    <TextView
         android:id="@+id/time_tag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_cv"
-        android:layout_margin="4dp"
+        android:layout_alignRight="@+id/tv_cv"
+        android:layout_margin="2dp"
         android:text="######" />
+
+    <TextView
+        android:id="@+id/time_stamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tv_cv"
+        android:layout_margin="2dp"
+        android:text="13:24" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/tv_cv"
