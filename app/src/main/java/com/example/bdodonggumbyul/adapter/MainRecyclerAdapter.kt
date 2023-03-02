@@ -58,7 +58,7 @@ class MainRecyclerAdapter(var context: Context, var list: MutableList<MemoItem>)
             binding.timeStamp.text = memo.timestamp
             binding.textDetail.text = memo.content
             binding.timeTag.text = when(memo.tag) {
-                null -> ""
+                null,"" -> ""
                 else ->" #${memo.tag}"
             }
         }

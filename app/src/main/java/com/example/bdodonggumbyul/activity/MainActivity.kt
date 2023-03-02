@@ -41,7 +41,12 @@ class MainActivity : AppCompatActivity() {
     val gson = GsonBuilder().create()
     val pref by lazy { this@MainActivity.getSharedPreferences("user_data", Context.MODE_PRIVATE) }
     val editor by lazy { pref.edit() }
-    val id: Int by lazy { gson.fromJson(pref.getString("user_data", ""), UserData::class.java).seq.toInt() }
+    val id: Int by lazy {
+        gson.fromJson(
+            pref.getString("user_data", ""),
+            UserData::class.java
+        ).seq.toInt()
+    }
     var tagList = ""
     var selectedDay = SimpleDateFormat("yyyy.MM.dd").format(Date())
 
@@ -52,28 +57,40 @@ class MainActivity : AppCompatActivity() {
         const val REQUEST_FILTERED_TAGS = 1994
         const val REQUEST_SELECTED_TAGS = 2023
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        queryDateNTag(id,"","")
+        queryDateNTag(id, "", "")
         binding.mainTb.title = "메모 전체보기"
 
         setHomeRecycler()
         setCalendarRecycler()
         setListenter()
-        reloadData()
 
         verifyStoragePermissions(this@MainActivity)
 
-        if (!binding.mainTb.title.contains(".")) queryDateNTag(id, "", tagList)
-        else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
+//        if (!binding.mainTb.title.contains(".")) queryDateNTag(id, "", tagList)
+//        else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
     }//onCreate
 
     fun setListenter() {
+        binding.fabAdd.setOnClickListener {
+            val bundle = Bundle()
+            if (binding.mainTb.title.contains("."))
+                openAddBSDialog(binding.mainTb.title.toString(), bundle, 0)
+            else openAddBSDialog(selectedDay, bundle, 0)
+            true
+        }
+        binding.swipe.setOnRefreshListener {
+            if (binding.mainTb.title.toString() == "메모 전체보기") queryDateNTag(id, "", tagList)
+            else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
+            binding.swipe.isRefreshing = false
+        }
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
         binding.etKw.setOnKeyListener { v, keyCode, event ->
-            if (event.action ==KeyEvent.ACTION_DOWN && keyCode ==KeyEvent.KEYCODE_ENTER){
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(binding.etKw.windowToken, 0)
                 queryKeyword(binding.etKw.text.toString())
@@ -98,18 +115,18 @@ class MainActivity : AppCompatActivity() {
                 openAddBSDialog("", bundle, position)
             }
         })
-        homeAdapter.setItemLongClickListener(object : MainRecyclerAdapter.OnLongClickListener{
+        homeAdapter.setItemLongClickListener(object : MainRecyclerAdapter.OnLongClickListener {
             override fun onLongClick(view: View, position: Int): Boolean {
                 AlertDialog.Builder(this@MainActivity)
                     .setMessage("${memos[position].content} 메모를 삭제합니다. 계속하시겠습니까?")
-                    .setPositiveButton("네", object : DialogInterface.OnClickListener{
+                    .setPositiveButton("네", object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
                             //메모 삭제 레트로핏
                             deleteMemo(memos[position])
                             dialog?.dismiss()
                         }
                     })
-                    .setNegativeButton("아니오", object : DialogInterface.OnClickListener{
+                    .setNegativeButton("아니오", object : DialogInterface.OnClickListener {
                         override fun onClick(dialog: DialogInterface?, which: Int) {
                             dialog?.dismiss()
                         }
@@ -118,6 +135,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
     fun setCalendarRecycler() {
         var selected = GregorianCalendar()
 
@@ -157,15 +175,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     fun queryKeyword(keyword: String) {
         if (keyword != null) {
             val retrofitService = RetrofitService.newInstance()
             val call = retrofitService.queryKeyword(id, keyword)
 
             call.enqueue(object : Callback<MutableList<MemoItem>> {
-                override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                override fun onResponse(
+                    call: Call<MutableList<MemoItem>>,
+                    response: Response<MutableList<MemoItem>>
+                ) {
                     updateMemos(response)
                 }
+
                 override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
                     failureMessage(t)
                 }
@@ -174,22 +197,23 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this@MainActivity, "검색할 단어를 입력하세요", Toast.LENGTH_SHORT).show()
         }
     }
-    fun deleteMemo(memoItem: MemoItem){
+
+    fun deleteMemo(memoItem: MemoItem) {
         val memoid = memoItem.memoId
 
         val retrofitService = RetrofitService.newInstance()
         val call = retrofitService.deleteMemo(id, memoid)
-        call.enqueue(object : Callback<String>{
+        call.enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 if (response != null) {
                     homeAdapter.notifyDataSetChanged()
                 }
                 Toast.makeText(this@MainActivity, "메모를 삭재하였습니다", Toast.LENGTH_SHORT).show()
-                reloadData()
             }
 
             override fun onFailure(call: Call<String>, t: Throwable) {
-                Toast.makeText(this@MainActivity, "메모 삭제에 실패했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "메모 삭제에 실패했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT)
+                    .show()
             }
         })
     }
@@ -199,7 +223,10 @@ class MainActivity : AppCompatActivity() {
         val call = retrofitService.queryDateNTag(id, date, tag)
 
         call.enqueue(object : Callback<MutableList<MemoItem>> {
-            override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+            override fun onResponse(
+                call: Call<MutableList<MemoItem>>,
+                response: Response<MutableList<MemoItem>>
+            ) {
                 updateMemos(response)
             }
 
@@ -229,13 +256,19 @@ class MainActivity : AppCompatActivity() {
                         val result = gson.fromJson(intent, tags::class.java)
                         var tagList = ""
                         if (intent != "") {
-                            for (i in result) { tagList += " #$i" }
+                            for (i in result) {
+                                tagList += " #$i"
+                            }
                             this.tagList = tagList
-                        }else{
+                        } else {
                             this.tagList = tagList
                         }
 
-                        if (binding.mainTb.title.contains(".")) queryDateNTag(id, binding.mainTb.title.toString(), this.tagList)
+                        if (binding.mainTb.title.contains(".")) queryDateNTag(
+                            id,
+                            binding.mainTb.title.toString(),
+                            this.tagList
+                        )
                         else {
                             binding.mainTb.title = "메모 전체보기"
                             queryDateNTag(id, "", this.tagList)
@@ -245,12 +278,13 @@ class MainActivity : AppCompatActivity() {
 
                         val list = mutableListOf<String>()
                         val tagResult = gson.fromJson(intent, list::class.java)
-                        if (tagResult[0] != ""){
+                        Log.d("@@@tagResult", tagResult.toString())
+                        if (tagResult.size > 0 && tagResult[0] != "") {
                             for (i in tagResult) {
                                 selectedTags.add(i)
                                 selTagAdapter.notifyDataSetChanged()
                             }
-                        }else{
+                        } else {
                             selectedTags.add("전체")
                             selTagAdapter.notifyDataSetChanged()
                         }
@@ -260,9 +294,9 @@ class MainActivity : AppCompatActivity() {
                         selTagAdapter.setFilterTagClickListener(object :
                             SelectedTagAdapter.OnFilterTagClickListener {
                             override fun onClick(view: View, posision: Int) {
-                                //여기서 레트로핏
                                 selectedTags.remove(selectedTags[posision])
                                 selTagAdapter.notifyDataSetChanged()
+
                                 Log.d("@@@@필터 태그 삭제 확인", selectedTags.toString())
                             }
                         })
@@ -271,11 +305,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun getDate(string: String): String {
+        if (string.contains(".")) return string
+        else return selectedDay
+    }
+
     fun toolbarListener(it: MenuItem): Boolean {
         return when (it.itemId) {
             R.id.tag -> {
                 binding.etKw.visibility = View.GONE
-                startActivityForResult(Intent(this@MainActivity, SetTagActivity::class.java), REQUEST_FILTERED_TAGS)
+                startActivityForResult(
+                    Intent(this@MainActivity, SetTagActivity::class.java),
+                    REQUEST_FILTERED_TAGS
+                )
                 true
             }
             R.id.key -> {
@@ -289,11 +332,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 true
             }
-            R.id.add -> {
-                val bundle = Bundle()
-                if (binding.mainTb.title.contains("."))
-                openAddBSDialog(binding.mainTb.title.toString(), bundle, 0)
-                else openAddBSDialog(selectedDay, bundle, 0)
+            R.id.date -> {
+                binding.drawerLayout.openDrawer(Gravity.LEFT)
                 true
             }
             R.id.all -> {
@@ -309,14 +349,6 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, "error", Toast.LENGTH_SHORT).show()
                 false
             }
-        }
-    }
-
-    fun reloadData(){
-        binding.swipe.setOnRefreshListener {
-            if (binding.mainTb.title.toString() == "메모 전체보기") queryDateNTag(id, "", tagList)
-            else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
-            binding.swipe.isRefreshing = false
         }
     }
 
@@ -358,9 +390,10 @@ class MainActivity : AppCompatActivity() {
         })
         d.show(supportFragmentManager, attributionTag)
     }
-    fun updateMemos(response: Response<MutableList<MemoItem>>){
 
-        Log.d("@@@@성공은 했는데 일단 확인해보셈","${response.body()}")
+    fun updateMemos(response: Response<MutableList<MemoItem>>) {
+
+        Log.d("@@@@성공은 했는데 일단 확인해보셈", "${response.body()}")
         memos.clear()
         homeAdapter.notifyDataSetChanged()
 
@@ -371,12 +404,13 @@ class MainActivity : AppCompatActivity() {
                 memos.add(0, i)
                 homeAdapter.notifyItemInserted(0)
             }
-        }else{
+        } else {
             binding.resultAlert.visibility = View.VISIBLE
             binding.resultAlert.text = "검색 결과가 없습니다"
         }
     }
-    fun failureMessage(t: Throwable){
+
+    fun failureMessage(t: Throwable) {
         Log.d("@@일단 뭔가를 실패한 것 같음", "${t.message}")
     }
 

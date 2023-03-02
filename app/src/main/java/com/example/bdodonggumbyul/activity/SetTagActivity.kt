@@ -56,31 +56,34 @@ class SetTagActivity : AppCompatActivity() {
         binding.btnDone.setOnClickListener { doneEvent() }
 //        binding.btnDelete.setOnClickListener { deleteTag() }
         //rv내 태그 선택시 다중선택가능&색상 변화
-
-        binding.tagEt.setOnKeyListener { v, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(binding.tagEt.windowToken, 0)
-                true
-            }
-            false
-        }
     }
 
     var isSelected = arrayListOf<String>()
     var isSelectedKey = arrayListOf<String>()
     fun setRecycler() {
+        tagMap = gson.fromJson(pref.getString("tag_list", "")!!, tagMap::class.java)
+        tagMap["0"] = "전체"
+        keys = tagMap.keys.toMutableList()
+        tags = tagMap.values.toMutableList()
+
+        tagAdapter = SetTagAdapter(tags)
+        index = tagMap.keys.last().toInt() + 1
+
         //et 작성후 submit하면 rv에 태그 추가
         //엔터후에 즉시 item list의 리프레시가 일어나지 않음
         binding.tagEt.setOnKeyListener { _, keyCode, event ->
             when (keyCode) {
                 KeyEvent.KEYCODE_ENTER -> { //엔터가 두번 눌리는듯
                     if (event.action == KeyEvent.ACTION_DOWN) { //분기처리해서 중복입력 방지 //내가 해냄
+                        val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(binding.tagEt.windowToken, 0)
+
                         val item = binding.tagEt.text.toString()
                         tagMap[index.toString()] = item
+                        tags.add(item)
                         editor.putString("tag_list", gson.toJson(tagMap)).commit()
-                        tagAdapter.notifyDataSetChanged()
                         binding.tagEt.text.clear()
+                        tagAdapter.notifyDataSetChanged()
                         index++
                         Log.d("@@@@pref 데이터 추가 확인", "${pref.getString("tag_list", "")}")
                     }
@@ -91,15 +94,8 @@ class SetTagActivity : AppCompatActivity() {
                     false
                 }
             }
+            true
         }
-
-        tagMap = gson.fromJson(pref.getString("tag_list", "")!!, tagMap::class.java)
-        tagMap["0"] = "전체"
-        keys = tagMap.keys.toMutableList()
-        tags = tagMap.values.toMutableList()
-
-        tagAdapter = SetTagAdapter(tags)
-        index = tagMap.keys.last().toInt() + 1
 
         binding.rvTag.adapter = tagAdapter
         rvm.justifyContent = JustifyContent.CENTER

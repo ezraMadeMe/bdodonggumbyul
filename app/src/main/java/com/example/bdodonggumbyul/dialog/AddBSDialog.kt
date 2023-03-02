@@ -215,8 +215,6 @@ class AddBSDialog : BottomSheetDialogFragment() {
             val call = retrofitService.insertMemo(dataPart, filePart)
             call.enqueue(object : Callback<String> {
                 override fun onResponse(call: Call<String>, response: Response<String>) {
-                    //토스트도 안 뜨고 이미지url말고는 저장이 안됨...  //당연함 업로드 실패하니까...
-                    Log.d("레트로핏 성공@@@@@@@", "${response.body()}")
                     if (response.body()!!.contains("메모 업로드 성공")){
                         val add = memonum.toInt() + 1
                         editor.remove("memo_num")

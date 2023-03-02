@@ -22,7 +22,7 @@
         android:layout_marginVertical="8dp"
         android:layout_marginHorizontal="12dp"
         android:inputType="text"
-        android:imeOptions="actionSearch"/>
+        android:imeOptions="actionGo"/>
 
     <LinearLayout
         android:id="@+id/tag_btns"
