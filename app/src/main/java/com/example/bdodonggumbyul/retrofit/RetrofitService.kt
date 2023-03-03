@@ -37,6 +37,12 @@ interface RetrofitService {
         @Field("nickname") nickname: String,
         @Field("password") password: String
     ): Call<String>
+    //태그 삭제
+    @GET("memo/deleteTag.php")
+    fun deleteTag(
+        @Query("id") id: Int,
+        @Query("tag") tag: String
+    ): Call<String>
     //메모 삭제
     @GET("memo/deleteMemo.php")
     fun deleteMemo(

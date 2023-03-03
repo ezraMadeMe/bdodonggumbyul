@@ -19,10 +19,14 @@ import com.example.bdodonggumbyul.R
 import com.example.bdodonggumbyul.adapter.SetTagAdapter
 import com.example.bdodonggumbyul.databinding.ActivitySetTagBinding
 import com.example.bdodonggumbyul.model.UserData
+import com.example.bdodonggumbyul.retrofit.RetrofitService
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import kotlin.properties.Delegates
 
 class SetTagActivity : AppCompatActivity() {
@@ -54,7 +58,7 @@ class SetTagActivity : AppCompatActivity() {
 
         //done cancel 버튼 누르면 선택상태 저장하고 액티비티 종료
         binding.btnDone.setOnClickListener { doneEvent() }
-//        binding.btnDelete.setOnClickListener { deleteTag() }
+        binding.btnDelete.setOnClickListener { deleteTag() }
         //rv내 태그 선택시 다중선택가능&색상 변화
     }
 
@@ -81,6 +85,7 @@ class SetTagActivity : AppCompatActivity() {
                         val item = binding.tagEt.text.toString()
                         tagMap[index.toString()] = item
                         tags.add(item)
+                        keys.add(index.toString())
                         editor.putString("tag_list", gson.toJson(tagMap)).commit()
                         binding.tagEt.text.clear()
                         tagAdapter.notifyDataSetChanged()
@@ -123,6 +128,8 @@ class SetTagActivity : AppCompatActivity() {
                             isSelected.remove("")
                             isSelectedKey.remove("")
 
+                            Log.d("@@@@태그리스트 확인","$tags + $keys + $position")
+
                             isSelected.add(tags[position])
                             isSelectedKey.add(keys[position])
 
@@ -137,21 +144,19 @@ class SetTagActivity : AppCompatActivity() {
                         isSelectedKey.remove(keys[position])
                     }
                 }
-                when {
-                    !isSelected.contains("") -> {
-                        binding.btnDelete.setImageResource(R.drawable.baseline_delete_forever_24)
-                    }
-                    else -> {
-                        binding.btnDelete.setImageResource(R.drawable.baseline_exit_to_app_24)
-                    }
-                }
-                if (binding.btnDelete.drawable.equals(R.drawable.baseline_exit_to_app_24)){
-                    binding.btnDelete.setOnClickListener { finish() }
-                }else{
-                    binding.btnDelete.setOnClickListener { deleteTag() }
-                }
             }
         })
+    }
+
+    fun setTagString(tags: ArrayList<String>): String{
+        var tagList = ""
+        if (tags.size != 0 && !tags.contains("전체")) {
+            for (i in tags) {
+                tagList += " #$i"
+            }
+        }
+        Log.d("@@@태그배열 스트링화 메서드 확인", tagList)
+        return tagList
     }
 
     fun deleteTag() {
@@ -159,16 +164,24 @@ class SetTagActivity : AppCompatActivity() {
             .setMessage("$isSelected 태그를 삭제합니다.\n해당 태그를 포함한 메모들에서도 태그가 삭제됩니다.\n 계속하시겠습니까?")
             .setPositiveButton("네", object : DialogInterface.OnClickListener {
                 override fun onClick(dialog: DialogInterface?, which: Int) {
+                    val retrofitService = RetrofitService.newInstance()
+                    val call = retrofitService.deleteTag(id,setTagString(isSelected))
+                    call.enqueue(object : Callback<String>{
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
+                            Toast.makeText(this@SetTagActivity, "태그가 삭제되었습니다", Toast.LENGTH_SHORT).show()
+                        }
+
+                        override fun onFailure(call: Call<String>, t: Throwable) {
+                            Toast.makeText(this@SetTagActivity, "태그 삭제에 실패하였습니다", Toast.LENGTH_SHORT).show()
+                        }
+                    })
+
                     for (i in isSelectedKey) {
                         if (i != "0") {
                             tagMap.remove(i)
                             tagAdapter.notifyDataSetChanged()
                         } else {
-                            Toast.makeText(
-                                this@SetTagActivity,
-                                "전체 태그는 삭제할 수 없습니다",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(this@SetTagActivity, "전체 태그는 삭제할 수 없습니다", Toast.LENGTH_SHORT).show()
                         }
                     }
                     Log.d("@@@map 데이터 삭제 확인", "${tagMap.values}")
@@ -189,7 +202,7 @@ class SetTagActivity : AppCompatActivity() {
     fun doneEvent() {
         val intent = Intent(this@SetTagActivity, MainActivity::class.java)
         intent.putExtra("tags", gson.toJson(isSelected))
-        Log.d("@@@보내는 태그 확인", "$isSelected")
+        Log.d("@@@보내는 태그 확인", gson.toJson(isSelected))
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

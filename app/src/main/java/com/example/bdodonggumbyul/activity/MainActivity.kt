@@ -70,22 +70,24 @@ class MainActivity : AppCompatActivity() {
         setListenter()
 
         verifyStoragePermissions(this@MainActivity)
-
-//        if (!binding.mainTb.title.contains(".")) queryDateNTag(id, "", tagList)
-//        else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
     }//onCreate
+
+    fun getTbTitle(): String {
+        return when(binding.mainTb.title.contains(".")){
+            true -> binding.mainTb.title.toString()
+            else -> ""
+        }
+    }
 
     fun setListenter() {
         binding.fabAdd.setOnClickListener {
             val bundle = Bundle()
-            if (binding.mainTb.title.contains("."))
-                openAddBSDialog(binding.mainTb.title.toString(), bundle, 0)
+            if (binding.mainTb.title.contains(".")) openAddBSDialog(getTbTitle(), bundle, 0)
             else openAddBSDialog(selectedDay, bundle, 0)
             true
         }
         binding.swipe.setOnRefreshListener {
-            if (binding.mainTb.title.toString() == "메모 전체보기") queryDateNTag(id, "", tagList)
-            else queryDateNTag(id, binding.mainTb.title.toString(), tagList)
+            queryDateNTag(id, getTbTitle(), tagList)
             binding.swipe.isRefreshing = false
         }
         binding.mainTb.setOnMenuItemClickListener { toolbarListener(it) }
@@ -239,6 +241,21 @@ class MainActivity : AppCompatActivity() {
     var selectedTags = arrayListOf<String>()
     val selTagAdapter = SelectedTagAdapter(selectedTags)
 
+    fun setTagString(intent: String): String{
+        val tags = arrayListOf<String>()
+        val result = gson.fromJson(intent, tags::class.java)
+        var tagList = ""
+        if (intent != "") {
+            for (i in result) {
+                tagList += " #$i"
+            }
+            this.tagList = tagList
+        } else {
+            this.tagList = tagList
+        }
+        return tagList
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
@@ -252,33 +269,12 @@ class MainActivity : AppCompatActivity() {
                     binding.etKw.visibility = View.GONE
                     val intent = data?.extras?.getString("tags")
                     if (intent != null) {
-                        val tags = arrayListOf<String>()
-                        val result = gson.fromJson(intent, tags::class.java)
-                        var tagList = ""
-                        if (intent != "") {
-                            for (i in result) {
-                                tagList += " #$i"
-                            }
-                            this.tagList = tagList
-                        } else {
-                            this.tagList = tagList
-                        }
-
-                        if (binding.mainTb.title.contains(".")) queryDateNTag(
-                            id,
-                            binding.mainTb.title.toString(),
-                            this.tagList
-                        )
-                        else {
-                            binding.mainTb.title = "메모 전체보기"
-                            queryDateNTag(id, "", this.tagList)
-                        }
-
+                        queryDateNTag(id, getTbTitle(), setTagString(intent))
                         selectedTags.clear()
 
                         val list = mutableListOf<String>()
                         val tagResult = gson.fromJson(intent, list::class.java)
-                        Log.d("@@@tagResult", tagResult.toString())
+
                         if (tagResult.size > 0 && tagResult[0] != "") {
                             for (i in tagResult) {
                                 selectedTags.add(i)
@@ -293,11 +289,23 @@ class MainActivity : AppCompatActivity() {
                         binding.rvTag.visibility = View.VISIBLE
                         selTagAdapter.setFilterTagClickListener(object :
                             SelectedTagAdapter.OnFilterTagClickListener {
-                            override fun onClick(view: View, posision: Int) {
-                                selectedTags.remove(selectedTags[posision])
-                                selTagAdapter.notifyDataSetChanged()
+                            override fun onClick(view: View, position: Int) {
+                                tagList = tagList.replace(" #${selectedTags[position]}","")
+                                Log.d("@@@@필터 태그 삭제 확인", "$tagList + ${selectedTags[position]}")
 
-                                Log.d("@@@@필터 태그 삭제 확인", selectedTags.toString())
+                                val retrofitService = RetrofitService.newInstance()
+                                val call = retrofitService.queryDateNTag(id, getTbTitle(), tagList)
+                                call.enqueue(object : Callback<MutableList<MemoItem>>{
+                                    override fun onResponse(call: Call<MutableList<MemoItem>>, response: Response<MutableList<MemoItem>>) {
+                                        updateMemos(response)
+                                    }
+
+                                    override fun onFailure(call: Call<MutableList<MemoItem>>, t: Throwable) {
+                                        failureMessage(t)
+                                    }
+                                })
+                                selectedTags.remove(selectedTags[position])
+                                selTagAdapter.notifyDataSetChanged()
                             }
                         })
                     }
