@@ -1,6 +1,6 @@
-package com.example.bdodonggumbyul.retrofit
+package com.ezralee.bdodonggumbyul.retrofit
 
-import com.example.bdodonggumbyul.MemoItem
+import com.ezralee.bdodonggumbyul.model.MemoItem
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.MultipartBody

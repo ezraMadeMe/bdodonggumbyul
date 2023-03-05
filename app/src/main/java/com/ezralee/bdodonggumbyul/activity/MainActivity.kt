@@ -1,4 +1,4 @@
-package com.example.bdodonggumbyul.activity
+package com.ezralee.bdodonggumbyul.activity
 
 import android.Manifest
 import android.app.Activity
@@ -16,14 +16,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.emc.verticalweekcalendar.VerticalWeekCalendar
 import com.emc.verticalweekcalendar.model.CalendarDay
-import com.example.bdodonggumbyul.MemoItem
-import com.example.bdodonggumbyul.R
-import com.example.bdodonggumbyul.adapter.MainRecyclerAdapter
-import com.example.bdodonggumbyul.adapter.SelectedTagAdapter
-import com.example.bdodonggumbyul.databinding.ActivityMainBinding
-import com.example.bdodonggumbyul.dialog.AddBSDialog
-import com.example.bdodonggumbyul.model.UserData
-import com.example.bdodonggumbyul.retrofit.RetrofitService
+import com.ezralee.bdodonggumbyul.model.MemoItem
+import com.ezralee.bdodonggumbyul.adapter.MainRecyclerAdapter
+import com.ezralee.bdodonggumbyul.adapter.SelectedTagAdapter
+import com.ezralee.bdodonggumbyul.R
+import com.ezralee.bdodonggumbyul.databinding.ActivityMainBinding
+import com.ezralee.bdodonggumbyul.dialog.AddBSDialog
+import com.ezralee.bdodonggumbyul.model.UserData
+import com.ezralee.bdodonggumbyul.retrofit.RetrofitService
 import com.google.gson.GsonBuilder
 import retrofit2.Call
 import retrofit2.Callback

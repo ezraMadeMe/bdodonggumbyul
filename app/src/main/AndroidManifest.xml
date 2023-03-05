@@ -32,7 +32,7 @@
                 android:resource="@xml/provider_path" />
         </provider>
 
-        <activity android:name=".activity.LoginActivity"
+        <activity android:name="com.ezralee.bdodonggumbyul.activity.LoginActivity"
             android:exported="true"
             android:theme="@style/AppTheme">
             <intent-filter>
@@ -42,20 +42,20 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.DatePickerActivity"
+        <activity android:name="com.ezralee.bdodonggumbyul.activity.DatePickerActivity"
             android:exported="false"/>
 
         <activity
-            android:name=".activity.SetTagActivity"
+            android:name="com.ezralee.bdodonggumbyul.activity.SetTagActivity"
             android:exported="false"
             android:theme="@style/AppTheme" />
 
         <activity
-            android:name=".activity.SetDateActivity"
+            android:name="com.ezralee.bdodonggumbyul.activity.SetDateActivity"
             android:exported="false" />
 
         <activity
-            android:name=".activity.MainActivity"
+            android:name="com.ezralee.bdodonggumbyul.activity.MainActivity"
             android:exported="true"
             android:theme="@style/AppTheme">
         </activity>

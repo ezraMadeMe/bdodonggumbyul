@@ -1,12 +1,11 @@
-package com.example.bdodonggumbyul.adapter
+package com.ezralee.bdodonggumbyul.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.bdodonggumbyul.databinding.ItemFilterTagBinding
-import com.example.bdodonggumbyul.databinding.ItemTagBinding
+import com.ezralee.bdodonggumbyul.databinding.ItemFilterTagBinding
 
 class SelectedTagAdapter(var tags: ArrayList<String>): RecyclerView.Adapter<SelectedTagAdapter.VH>() {
 

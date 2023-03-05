@@ -1,18 +1,13 @@
-package com.example.bdodonggumbyul.adapter
+package com.ezralee.bdodonggumbyul.adapter
 
 import android.content.Context
-import android.content.DialogInterface
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView.OnItemLongClickListener
-import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.bdodonggumbyul.MemoItem
-import com.example.bdodonggumbyul.databinding.ItemHomeBinding
-import com.google.gson.GsonBuilder
+import com.ezralee.bdodonggumbyul.model.MemoItem
+import com.ezralee.bdodonggumbyul.databinding.ItemHomeBinding
 
 class MainRecyclerAdapter(var context: Context, var list: MutableList<MemoItem>) :
     RecyclerView.Adapter<MainRecyclerAdapter.VH>() {

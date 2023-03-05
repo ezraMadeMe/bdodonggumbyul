@@ -1,4 +1,4 @@
-package com.example.bdodonggumbyul
+package com.ezralee.bdodonggumbyul
 
 import org.junit.Test
 

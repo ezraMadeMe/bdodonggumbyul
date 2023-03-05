@@ -1,4 +1,4 @@
-package com.example.bdodonggumbyul.activity
+package com.ezralee.bdodonggumbyul.activity
 
 import android.content.Context
 import android.util.AttributeSet

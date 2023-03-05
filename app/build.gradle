@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.bdodonggumbyul'
+    namespace 'com.ezralee.bdodonggumbyul'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.bdodonggumbyul"
+        applicationId "com.ezralee.bdodonggumbyul"
         minSdk 31
         targetSdk 33
         versionCode 1

@@ -1,4 +1,4 @@
-package com.example.bdodonggumbyul.activity
+package com.ezralee.bdodonggumbyul.activity
 
 import android.app.Activity
 import android.content.Context
@@ -10,9 +10,9 @@ import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.bdodonggumbyul.databinding.ActivityLoginBinding
-import com.example.bdodonggumbyul.model.UserData
-import com.example.bdodonggumbyul.retrofit.RetrofitService
+import com.ezralee.bdodonggumbyul.databinding.ActivityLoginBinding
+import com.ezralee.bdodonggumbyul.model.UserData
+import com.ezralee.bdodonggumbyul.retrofit.RetrofitService
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import retrofit2.Call

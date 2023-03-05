@@ -1,11 +1,11 @@
-package com.example.bdodonggumbyul.adapter
+package com.ezralee.bdodonggumbyul.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.bdodonggumbyul.databinding.ItemDailyCalendarBinding
+import com.ezralee.bdodonggumbyul.databinding.ItemDailyCalendarBinding
 
 class VCalendarAdapter(var list: MutableList<String>): RecyclerView.Adapter<VCalendarAdapter.VH>() {
 

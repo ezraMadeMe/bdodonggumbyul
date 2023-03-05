@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false"
     android:nestedScrollingEnabled="true"
-    tools:context=".activity.MainActivity">
+    tools:context="com.ezralee.bdodonggumbyul.activity.MainActivity">
 
     <RelativeLayout
         android:id="@+id/drawer_main"

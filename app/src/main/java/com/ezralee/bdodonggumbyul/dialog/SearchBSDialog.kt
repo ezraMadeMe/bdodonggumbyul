@@ -1,13 +1,11 @@
-package com.example.bdodonggumbyul.dialog
+package com.ezralee.bdodonggumbyul.dialog
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.DialogFragment
-import com.example.bdodonggumbyul.R
-import com.example.bdodonggumbyul.databinding.BsdAddBinding
-import com.example.bdodonggumbyul.databinding.BsdSearchBinding
+import com.ezralee.bdodonggumbyul.R
+import com.ezralee.bdodonggumbyul.databinding.BsdSearchBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class SearchBSDialog: BottomSheetDialogFragment() {

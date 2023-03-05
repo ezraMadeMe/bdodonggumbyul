@@ -1,4 +1,4 @@
-package com.example.bdodonggumbyul.model
+package com.ezralee.bdodonggumbyul.model
 
 import com.google.gson.annotations.SerializedName
 

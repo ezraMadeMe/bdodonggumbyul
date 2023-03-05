@@ -1,11 +1,11 @@
-package com.example.bdodonggumbyul.adapter
+package com.ezralee.bdodonggumbyul.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.bdodonggumbyul.databinding.ItemTagBinding
+import com.ezralee.bdodonggumbyul.databinding.ItemTagBinding
 
 class SetTagAdapter(var tags: MutableList<String>): RecyclerView.Adapter<SetTagAdapter.VH>() {
 
